@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ermt__RiskClassChartRacDataLabelBackColor__c</fullName>
+    <deprecated>false</deprecated>
+    <description>16進トリプレット表記（#rrggbb形式）のカラーコードで指定します。</description>
+    <externalId>false</externalId>
+    <inlineHelpText>16進トリプレット表記（#rrggbb形式）のカラーコードで指定します。</inlineHelpText>
+    <label>リスク分類チャート（リスクアセスメント分類軸）のデータラベルの背景色</label>
+    <length>7</length>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,15 @@
+<template>
+    <lightning-quick-action-panel header="Confirmation">
+        <div class="slds-is-relative">
+            <lightning-spinner if:true={isProcessing} alternative-text="Processing"  variant="brand"></lightning-spinner>
+            <p class="slds-align_absolute-center" style="font-size: 18;"> Copy Account Confirmation ? </p>
+            <template if:true={isError}>
+                <p style="font-size: 18; color: red">{errorMessage}</p>
+            </template>
+            <div slot="footer" class="slds-grid slds-grid_align-end">
+                    <lightning-button variant="neutral" label="キャンセル" onclick={handleCancel}></lightning-button>
+                    <lightning-button variant="brand" label="コピー" class="slds-m-left_x-small" onclick={handleSubmit}></lightning-button>
+            </div>
+        </div>
+    </lightning-quick-action-panel>
+</template>

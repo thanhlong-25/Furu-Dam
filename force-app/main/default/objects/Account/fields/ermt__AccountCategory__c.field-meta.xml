@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ermt__AccountCategory__c</fullName>
+    <deprecated>false</deprecated>
+    <externalId>false</externalId>
+    <label>組織・部門 分類</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>自社内</fullName>
+                <default>false</default>
+                <label>自社内</label>
+            </value>
+            <value>
+                <fullName>グループ会社</fullName>
+                <default>false</default>
+                <label>グループ会社</label>
+            </value>
+            <value>
+                <fullName>社外ステークホルダー</fullName>
+                <default>false</default>
+                <label>社外ステークホルダー</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>3</visibleLines>
+</CustomField>
