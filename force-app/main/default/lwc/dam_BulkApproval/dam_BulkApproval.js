@@ -5,8 +5,6 @@ import LOCALE from '@salesforce/i18n/locale';
 import CURRENCY from '@salesforce/i18n/currency';
 import TIME_ZONE from '@salesforce/i18n/timeZone';
 import label_title from '@salesforce/label/ermt.ProjectRisklist_Title';
-import label_displayFieldsSetting from '@salesforce/label/ermt.ProjectRisklist_DisplayFieldsSetting';
-import label_searchCondition from '@salesforce/label/ermt.ProjectRisklist_SearchCondition';
 import label_risk from '@salesforce/label/ermt.ObjectLabel_Risk';
 import label_control from '@salesforce/label/ermt.ObjectLabel_Control';
 import label_editError from '@salesforce/label/ermt.ProjectRisklist_EditError';
@@ -20,12 +18,8 @@ import label_list_first from '@salesforce/label/ermt.List_First';
 import label_list_last from '@salesforce/label/ermt.List_Last';
 import label_list_next from '@salesforce/label/ermt.List_Next';
 import label_list_previous from '@salesforce/label/ermt.List_Previous';
-import label_input_selectable from '@salesforce/label/ermt.Input_Selectable';
-import label_input_selected from '@salesforce/label/ermt.Input_Selected';
 import label_true from '@salesforce/label/ermt.Value_True';
 import label_false from '@salesforce/label/ermt.Value_False';
-import label_ok from '@salesforce/label/ermt.Action_Ok';
-import label_cancel from '@salesforce/label/ermt.Action_Cancel';
 import label_referToTheSameControl from '@salesforce/label/c.ProjectRisklist_ReferToTheSameControl';
 import label_approvalTitle from '@salesforce/label/c.ApprovalApprove_ApproveTitle';
 import label_comment from '@salesforce/label/c.ApprovalApprove_Comments';
@@ -61,10 +55,7 @@ import {
     , TYPE_ID
     , TYPE_REFERENCE
 } from 'c/dam_CommonUtil';
-import getRiskDisplayFieldNameSels from '@salesforce/apex/DAM_ProjectRisklistCtlr.getRiskDisplayFieldNameSels';
-import getControlDisplayFieldNameSels from '@salesforce/apex/DAM_ProjectRisklistCtlr.getControlDisplayFieldNameSels';
 import getRisklistDisplayFieldName from '@salesforce/apex/DAM_ProjectRisklistCtlr.getRisklistDisplayFieldName';
-import saveRisklistDisplayFieldName from '@salesforce/apex/DAM_ProjectRisklistCtlr.saveRisklistDisplayFieldName';
 import getRiskFieldDescByName from '@salesforce/apex/DAM_ProjectRisklistCtlr.getRiskFieldDescByName';
 import getControlFieldDescByName from '@salesforce/apex/DAM_ProjectRisklistCtlr.getControlFieldDescByName';
 import getRisks from '@salesforce/apex/DAM_BulkApproval.getRisks';
@@ -77,8 +68,6 @@ export default class Dam_BulkApproval extends LightningElement {
     // ラベル
     label = {
         title: label_title
-        , displayFieldsSetting: label_displayFieldsSetting
-        , searchCondition: label_searchCondition
         , risk: label_risk
         , control: label_control
         , list_number: label_list_number
@@ -87,10 +76,6 @@ export default class Dam_BulkApproval extends LightningElement {
         , list_last: label_list_last
         , list_next: label_list_next
         , list_previous: label_list_previous
-        , selectable: label_input_selectable
-        , selected: label_input_selected
-        , ok: label_ok
-        , cancel: label_cancel
         , riskLabel: ''
         , approvalSubmit_title: label_approvalSubmit_title
         , approvalSubmit_submit_confirm_1: label_approvalSubmit_submit_confirm_1
@@ -122,11 +107,6 @@ export default class Dam_BulkApproval extends LightningElement {
     isProcessing = false; // 処理中
     isOriginalStyleRendered = false; // 独自スタイル描画済
     displayFieldName = this.defaultDisplayFieldName; // 表示項目名
-    @track dispFieldNameTemp = this.defaultDisplayFieldName; // 表示項目名（一時保管）
-    riskDisplayFieldNameSels = null; // リスク表示項目名選択リスト
-    controlDisplayFieldNameSels = null; // 対応策表示項目名選択リスト
-    searchCondition = this.defaultSearchCondition; // 検索条件
-    @track searchCondTemp = this.defaultSearchCondition; // 検索条件（一時保管）
     windowHeight = window.innerHeight; // ウィンドウの高さ
     header1 = null; // ヘッダー1
     @track header2 = null; // ヘッダー2
@@ -135,8 +115,6 @@ export default class Dam_BulkApproval extends LightningElement {
     @track fixedHeaderTop = this.createFixedHeaderTop(); // 固定ヘッダ（上）
     get riskObjectName() { return RISK_OBJECT.objectApiName; } // リスクオブジェクト名
     get controlObjectName() { return CONTROL_OBJECT.objectApiName; } // 対応策オブジェクト名
-    get riskSearchCondClass() { return 'slds-section__content' + (this.searchCondTemp.risk.isEnabled ? '' : ' slds-hide'); } // リスク検索条件クラス
-    get controlSearchCondClass() { return 'slds-section__content' + (this.searchCondTemp.control.isEnabled ? '' : ' slds-hide'); } // 対応策検索条件クラス
 
     //Approval
     hasCheckedRow = false;
@@ -198,62 +176,6 @@ export default class Dam_BulkApproval extends LightningElement {
         };
     }
 
-    // デフォルトの検索条件
-    get defaultSearchCondition() {
-        return {
-            risk: {
-                isEnabled: false
-                , searchConds: null
-                , searchCondLogic: null
-            }
-            , riskAssessment: {
-                isEnabled: false
-                , searchConds: null
-                , searchCondLogic: null
-            }
-            , riskAssessmentClassi: {
-                isEnabled: false
-                , analyseTiming: {
-                    isEnabled: false
-                    , value: null
-                }
-                , probability: {
-                    isEnabled: false
-                    , value: null
-                }
-                , resultImpact: {
-                    isEnabled: false
-                    , value: null
-                }
-                , thirdEvaluation: {
-                    isEnabled: false
-                    , value: null
-                }
-            }
-            , control: {
-                isEnabled: false
-                , searchConds: null
-                , searchCondLogic: null
-            }
-        };
-    }
-
-    // 検索条件（一時保管）：リスク
-    get searchCondTempRisk() {
-        return {
-            searchConds: this.searchCondTemp.risk.searchConds
-            , searchCondLogic: this.searchCondTemp.risk.searchCondLogic
-        };
-    }
-
-    // 検索条件（一時保管）：対応策
-    get searchCondTempControl() {
-        return {
-            searchConds: this.searchCondTemp.control.searchConds
-            , searchCondLogic: this.searchCondTemp.control.searchCondLogic
-        };
-    }
-
     // 先頭ページ有効
     get isFirstPageEnable() {
         return (this.pageInfo.pageNumber > 2);
@@ -284,13 +206,9 @@ export default class Dam_BulkApproval extends LightningElement {
                 this.windowHeight = window.innerHeight;
             }, false);
 
-            // 検索条件の読込み
-            //await this.loadSearchCondition();
-
             // リスク一覧の読込み
             await this.loadRisklist();
         } catch (error) {
-            //console.log('error=' + JSON.stringify(error));
             this.errorMessages = getErrorMessages(error);
         }
         this.isProcessing = false;
@@ -300,403 +218,6 @@ export default class Dam_BulkApproval extends LightningElement {
     renderedCallback() {
         // 独自スタイル追加
         this.addOriginalStyle();
-    }
-
-    // 表示項目設定クリック時
-    async handleDisplayFieldsSettingClick() {
-        this.errorMessages = null;
-        try {
-            // リスク表示項目名選択リストの取得
-            this.riskDisplayFieldNameSels = await getRiskDisplayFieldNameSels();
-
-            // 対応策表示項目名選択リストの取得
-            this.controlDisplayFieldNameSels = await getControlDisplayFieldNameSels();
-
-            // リスク表示項目名リストのコピー
-            this.dispFieldNameTemp.risk = [ ...this.displayFieldName.risk ];
-
-            // リスクアセスメント表示項目名リストのコピー
-            this.dispFieldNameTemp.riskAssessment = [ ...this.displayFieldName.riskAssessment ];
-
-            // 対応策表示項目名リストのコピー
-            this.dispFieldNameTemp.control = [ ...this.displayFieldName.control ];
-
-            // 表示項目設定ダイアログを開く
-            this.openDisplayFieldsSettingDialog();
-        } catch (error) {
-            this.errorMessages = getErrorMessages(error);
-        }
-    }
-
-    // リスク表示項目名の変更時
-    handleRiskDisplayFieldNameChange(event) {
-        this.dispFieldNameTemp.risk = event.detail.value;
-    }
-
-    // 対応策表示項目名の変更時
-    handleControlDisplayFieldNameChange(event) {
-        this.dispFieldNameTemp.control = event.detail.value;
-    }
-
-    // 表示項目設定のキャンセルのクリック時
-    handleDisplayFieldsSettingCancelClick() {
-        // 表示項目設定ダイアログを閉じる
-        this.closeDisplayFieldsSettingDialog();
-    }
-
-    // 表示項目設定のOKのクリック時
-    async handleDisplayFieldsSettingOkClick() {
-        // 入力チェック
-        let isValid = true;
-        const dialog = this.template.querySelector('[data-name="display-fields-setting-dialog"]');
-        isValid = [ ...dialog.querySelectorAll('lightning-dual-listbox') ]
-            .reduce((isValidSoFar, inputCmp) => {
-                //console.log('inputCmp.name=' + inputCmp.name);
-                inputCmp.reportValidity();
-                return isValidSoFar && inputCmp.checkValidity();
-            }
-                , isValid
-            );
-        if (!isValid) return;
-
-        this.isProcessing = true;
-        this.errorMessages = null;
-        try {
-            // リスク一覧表示項目名の保存
-            await saveRisklistDisplayFieldName({
-                projectId: this.approvalAssignInfo.Project__c
-                , fieldName: JSON.stringify(this.dispFieldNameTemp)
-            });
-
-            // 表示項目設定ダイアログを閉じる
-            this.closeDisplayFieldsSettingDialog();
-
-            // リスク一覧の読込み
-            await this.loadRisklist();
-        } catch (error) {
-            this.errorMessages = getErrorMessages(error);
-        }
-        this.isProcessing = false;
-    }
-
-    // 検索条件のクリック時
-    async handleSearchConditionClick() {
-        const dialog = this.template.querySelector('[data-name="search-condition-dialog"]');
-        this.errorMessages = null;
-        try {
-            // 検索条件の復元
-            // 検索条件有効
-            this.searchCondTemp.risk.isEnabled = this.searchCondition.risk.isEnabled;
-            this.searchCondTemp.riskAssessment.isEnabled = this.searchCondition.riskAssessment.isEnabled;
-            this.searchCondTemp.riskAssessmentClassi.isEnabled = this.searchCondition.riskAssessmentClassi.isEnabled;
-            this.searchCondTemp.riskAssessmentClassi.analyseTiming.isEnabled = this.searchCondition.riskAssessmentClassi.analyseTiming.isEnabled;
-            this.searchCondTemp.riskAssessmentClassi.probability.isEnabled = this.searchCondition.riskAssessmentClassi.probability.isEnabled;
-            this.searchCondTemp.riskAssessmentClassi.resultImpact.isEnabled = this.searchCondition.riskAssessmentClassi.resultImpact.isEnabled;
-            this.searchCondTemp.riskAssessmentClassi.thirdEvaluation.isEnabled = this.searchCondition.riskAssessmentClassi.thirdEvaluation.isEnabled;
-            this.searchCondTemp.control.isEnabled = this.searchCondition.control.isEnabled;
-
-            // リスクの検索条件
-            if (this.searchCondition.risk.searchConds) {
-                this.searchCondTemp.risk.searchConds = this.searchCondition.risk.searchConds.map(searchCond => { return { ...searchCond }; });
-            } else {
-                this.searchCondTemp.risk.searchConds = null;
-            }
-            this.searchCondTemp.risk.searchCondLogic = this.searchCondition.risk.searchCondLogic;
-            // if (this.searchCondTemp.risk.isEnabled) {
-            //     const cmp = dialog.querySelector('[data-name="risk-serach-condition"]');
-            //     if (cmp) {
-            //         cmp.restore();
-            //     }
-            // }
-            // リスクアセスメントの検索条件
-            if (this.searchCondition.riskAssessment.searchConds) {
-                this.searchCondTemp.riskAssessment.searchConds = this.searchCondition.riskAssessment.searchConds.map(searchCond => { return { ...searchCond }; });
-            } else {
-                this.searchCondTemp.riskAssessment.searchConds = null;
-            }
-            this.searchCondTemp.riskAssessment.searchCondLogic = this.searchCondition.riskAssessment.searchCondLogic;
-            // if (this.searchCondTemp.riskAssessment.isEnabled) {
-            //     const cmp = dialog.querySelector('[data-name="riskAssessment-serach-condition"]');
-            //     if (cmp) {
-            //         cmp.restore();
-            //     }
-            // }
-            // 対応策の検索条件
-            if (this.searchCondition.control.searchConds) {
-                this.searchCondTemp.control.searchConds = this.searchCondition.control.searchConds.map(searchCond => { return { ...searchCond }; });
-            } else {
-                this.searchCondTemp.control.searchConds = null;
-            }
-            this.searchCondTemp.control.searchCondLogic = this.searchCondition.control.searchCondLogic;
-            // if (this.searchCondTemp.control.isEnabled) {
-            //     const cmp = dialog.querySelector('[data-name="control-serach-condition"]');
-            //     if (cmp) {
-            //         cmp.restore();
-            //     }
-            // }
-
-            // 分析タイミングの検索条件
-            if (
-                this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-                this.searchCondTemp.riskAssessmentClassi.analyseTiming.isEnabled
-            ) {
-                this.searchCondTemp.riskAssessmentClassi.analyseTiming.value = (
-                    !this.searchCondition.riskAssessmentClassi.analyseTiming.value ?
-                        null : [ ...this.searchCondition.riskAssessmentClassi.analyseTiming.value ]
-                );
-            }
-
-            // 発生可能性の検索条件
-            if (
-                this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-                this.searchCondTemp.riskAssessmentClassi.probability.isEnabled
-            ) {
-                this.searchCondTemp.riskAssessmentClassi.probability.value = (
-                    !this.searchCondition.riskAssessmentClassi.probability.value ?
-                        null : [ ...this.searchCondition.riskAssessmentClassi.probability.value ]
-                );
-            }
-
-            // 結果影響度の検索条件
-            if (
-                this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-                this.searchCondTemp.riskAssessmentClassi.resultImpact.isEnabled
-            ) {
-                this.searchCondTemp.riskAssessmentClassi.resultImpact.value = (
-                    !this.searchCondition.riskAssessmentClassi.resultImpact.value ?
-                        null : [ ...this.searchCondition.riskAssessmentClassi.resultImpact.value ]
-                );
-            }
-
-            // 第三評価の検索条件
-            if (
-                this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-                this.searchCondTemp.riskAssessmentClassi.thirdEvaluation.isEnabled
-            ) {
-                this.searchCondTemp.riskAssessmentClassi.thirdEvaluation.value = (
-                    !this.searchCondition.riskAssessmentClassi.thirdEvaluation.value ?
-                        null : [ ...this.searchCondition.riskAssessmentClassi.thirdEvaluation.value ]
-                );
-            }
-
-            // 検索条件ダイアログを開く
-            this.openSearchConditionDialog();
-        } catch (error) {
-            this.errorMessages = getErrorMessages(error);
-        }
-    }
-
-    // リスク検索条件有効の変更時
-    handleRiskSearchCondEnableChange(event) {
-        this.searchCondTemp.risk.isEnabled = event.detail.checked;
-    }
-
-    // リスク検索条件の編集時
-    handleRiskSearchCondEdit(event) {
-        this.searchCondTemp.risk.searchConds = event.detail.searchConditions;
-        this.searchCondTemp.risk.searchCondLogic = event.detail.searchConditionLogic;
-    }
-
-
-    // 対応策検索条件有効の変更時
-    handleControlSearchCondEnableChange(event) {
-        this.searchCondTemp.control.isEnabled = event.detail.checked;
-    }
-
-    // 対応策検索条件の編集時
-    handleControlSearchCondEdit(event) {
-        this.searchCondTemp.control.searchConds = event.detail.searchConditions;
-        this.searchCondTemp.control.searchCondLogic = event.detail.searchConditionLogic;
-    }
-
-    // 検索条件のキャンセルのクリック時
-    handleSearchConditionCancelClick() {
-        // 検索条件ダイアログを閉じる
-        this.closeSearchConditionDialog();
-    }
-
-    // 検索条件のOKのクリック時
-    async handleSearchConditionOkClick() {
-        const dialog = this.template.querySelector('[data-name="search-condition-dialog"]');
-        // 入力チェック
-        let isValid = true;
-        // リスクの検索条件
-        if (this.searchCondTemp.risk.isEnabled) {
-            const cmp = dialog.querySelector('[data-name="risk-serach-condition"]');
-            if (cmp) {
-                const result = await cmp.checkValidity();
-                isValid = isValid && result;
-            }
-        }
-        // リスクアセスメントの検索条件
-        if (this.searchCondTemp.riskAssessment.isEnabled) {
-            const cmp = dialog.querySelector('[data-name="riskAssessment-serach-condition"]');
-            if (cmp) {
-                const result = await cmp.checkValidity();
-                isValid = isValid && result;
-            }
-        }
-        // 対応策の検索条件
-        if (this.searchCondTemp.control.isEnabled) {
-            const cmp = dialog.querySelector('[data-name="control-serach-condition"]');
-            if (cmp) {
-                const result = await cmp.checkValidity();
-                isValid = isValid && result;
-            }
-        }
-        // 分析タイミングの検索条件
-        if (
-            this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-            this.searchCondTemp.riskAssessmentClassi.analyseTiming.isEnabled
-        ) {
-            const cmp = dialog.querySelector('[data-name="analyseTiming-serach-condition"]');
-            if (cmp) {
-                cmp.reportValidity();
-                isValid = isValid && cmp.checkValidity();
-            }
-        }
-        // 発生可能性の検索条件
-        if (
-            this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-            this.searchCondTemp.riskAssessmentClassi.probability.isEnabled
-        ) {
-            const cmp = dialog.querySelector('[data-name="probability-serach-condition"]');
-            if (cmp) {
-                cmp.reportValidity();
-                isValid = isValid && cmp.checkValidity();
-            }
-        }
-        // 結果影響度の検索条件
-        if (
-            this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-            this.searchCondTemp.riskAssessmentClassi.resultImpact.isEnabled
-        ) {
-            const cmp = dialog.querySelector('[data-name="resultImpact-serach-condition"]');
-            if (cmp) {
-                cmp.reportValidity();
-                isValid = isValid && cmp.checkValidity();
-            }
-        }
-        // 第三評価の検索条件
-        if (
-            this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-            this.searchCondTemp.riskAssessmentClassi.thirdEvaluation.isEnabled
-        ) {
-            const cmp = dialog.querySelector('[data-name="thirdEvaluation-serach-condition"]');
-            if (cmp) {
-                cmp.reportValidity();
-                isValid = isValid && cmp.checkValidity();
-            }
-        }
-
-        if (!isValid) return;
-
-        this.isProcessing = true;
-        this.errorMessages = null;
-        try {
-            // 検索条件の保存
-            // リスクの検索条件
-            let searchConds = null;
-            let searchCondLogic = null;
-            if (this.searchCondTemp.risk.isEnabled) {
-                const cmp = dialog.querySelector('[data-name="risk-serach-condition"]');
-                if (cmp) {
-                    const result = cmp.save();
-                    searchConds = result.data.searchConditions;
-                    searchCondLogic = result.data.searchConditionLogic;
-                }
-            }
-            this.searchCondition.risk.searchConds = searchConds;
-            this.searchCondition.risk.searchCondLogic = searchCondLogic;
-
-            // リスクアセスメントの検索条件
-            searchConds = null;
-            searchCondLogic = null;
-            if (this.searchCondTemp.riskAssessment.isEnabled) {
-                const cmp = dialog.querySelector('[data-name="riskAssessment-serach-condition"]');
-                if (cmp) {
-                    const result = cmp.save();
-                    searchConds = result.data.searchConditions;
-                    searchCondLogic = result.data.searchConditionLogic;
-                }
-            }
-            this.searchCondition.riskAssessment.searchConds = searchConds;
-            this.searchCondition.riskAssessment.searchCondLogic = searchCondLogic;
-
-            // 対応策の検索条件
-            searchConds = null;
-            searchCondLogic = null;
-            if (this.searchCondTemp.control.isEnabled) {
-                const cmp = dialog.querySelector('[data-name="control-serach-condition"]');
-                if (cmp) {
-                    const result = cmp.save();
-                    searchConds = result.data.searchConditions;
-                    searchCondLogic = result.data.searchConditionLogic;
-                }
-            }
-            this.searchCondition.control.searchConds = searchConds;
-            this.searchCondition.control.searchCondLogic = searchCondLogic;
-
-            // 分析タイミングの検索条件
-            searchConds = null;
-            if (
-                this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-                this.searchCondTemp.riskAssessmentClassi.analyseTiming.isEnabled
-            ) {
-                searchConds = this.searchCondTemp.riskAssessmentClassi.analyseTiming.value
-            }
-            this.searchCondition.riskAssessmentClassi.analyseTiming.value = searchConds;
-
-            // 発生可能性の検索条件
-            searchConds = null;
-            if (
-                this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-                this.searchCondTemp.riskAssessmentClassi.probability.isEnabled
-            ) {
-                searchConds = this.searchCondTemp.riskAssessmentClassi.probability.value
-            }
-            this.searchCondition.riskAssessmentClassi.probability.value = searchConds;
-
-            // 結果影響度の検索条件
-            searchConds = null;
-            if (
-                this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-                this.searchCondTemp.riskAssessmentClassi.resultImpact.isEnabled
-            ) {
-                searchConds = this.searchCondTemp.riskAssessmentClassi.resultImpact.value
-            }
-            this.searchCondition.riskAssessmentClassi.resultImpact.value = searchConds;
-
-            // 第三評価の検索条件
-            searchConds = null;
-            if (
-                this.searchCondTemp.riskAssessmentClassi.isEnabled &&
-                this.searchCondTemp.riskAssessmentClassi.thirdEvaluation.isEnabled
-            ) {
-                searchConds = this.searchCondTemp.riskAssessmentClassi.thirdEvaluation.value
-            }
-            this.searchCondition.riskAssessmentClassi.thirdEvaluation.value = searchConds;
-
-            // 検索条件有効
-            this.searchCondition.risk.isEnabled = this.searchCondTemp.risk.isEnabled;
-            this.searchCondition.riskAssessment.isEnabled = this.searchCondTemp.riskAssessment.isEnabled;
-            this.searchCondition.riskAssessmentClassi.isEnabled = this.searchCondTemp.riskAssessmentClassi.isEnabled;
-            this.searchCondition.riskAssessmentClassi.analyseTiming.isEnabled = this.searchCondTemp.riskAssessmentClassi.analyseTiming.isEnabled;
-            this.searchCondition.riskAssessmentClassi.probability.isEnabled = this.searchCondTemp.riskAssessmentClassi.probability.isEnabled;
-            this.searchCondition.riskAssessmentClassi.resultImpact.isEnabled = this.searchCondTemp.riskAssessmentClassi.resultImpact.isEnabled;
-            this.searchCondition.riskAssessmentClassi.thirdEvaluation.isEnabled = this.searchCondTemp.riskAssessmentClassi.thirdEvaluation.isEnabled;
-            this.searchCondition.control.isEnabled = this.searchCondTemp.control.isEnabled;
-
-            // 検索条件ダイアログを閉じる
-            this.closeSearchConditionDialog();
-
-            // リスク一覧の読込み
-            await this.loadRisklist();
-            this.handleClearAllCheckbox();
-        } catch (error) {
-            this.errorMessages = getErrorMessages(error);
-        }
-        this.isProcessing = false;
     }
 
     // ページ移動クリック時
@@ -874,19 +395,16 @@ export default class Dam_BulkApproval extends LightningElement {
         });
         displayFieldName = !displayFieldName ? null : JSON.parse(displayFieldName);
         this.displayFieldName = displayFieldName || this.defaultDisplayFieldName;
-        //console.log('displayFieldName=' + JSON.stringify(this.displayFieldName));
 
         // リスク項目説明マップの取得
         const riskFieldDescByName = await getRiskFieldDescByName({
             dispFieldNames: this.displayFieldName.risk
         });
-        //console.log('riskFieldDescByName=' + JSON.stringify(riskFieldDescByName));
 
         // 対応策項目説明マップの取得
         const controlFieldDescByName = await getControlFieldDescByName({
             dispFieldNames: this.displayFieldName.control
         });
-        //console.log('controlFieldDescByName=' + JSON.stringify(controlFieldDescByName));
 
         // リスクリストの取得
         const risks = await this.getRisks({
@@ -894,21 +412,17 @@ export default class Dam_BulkApproval extends LightningElement {
             , approvalAssignProjectId: this.approvalAssignInfo.Project__c
             , approvalAssignOrgId: this.approvalAssignInfo.Organization__c
             , dispFieldNames: this.displayFieldName.risk
-            , searchConds: this.searchCondition.risk.searchConds
-            , searchCondLogic: this.searchCondition.risk.searchCondLogic
+            , searchConds: null
+            , searchCondLogic: null
         });
-
-        // console.log('risks=' + JSON.stringify(risks));
 
         // 対応策リストマップの取得
         const controlsByRiskId = await this.getControlsByRiskId({
             projectId: this.approvalAssignInfo.Project__c
             , dispFieldNames: this.displayFieldName.control
-            , searchConds: this.searchCondition.control.searchConds
-            , searchCondLogic: this.searchCondition.control.searchCondLogic
+            , searchConds: null
+            , searchCondLogic: null
         });
-
-        //console.log('controlsByRiskId=' + JSON.stringify(controlsByRiskId));
 
         // リスク一覧のヘッダの作成
         const header1 = [];
@@ -963,8 +477,6 @@ export default class Dam_BulkApproval extends LightningElement {
                 , colspan: colspan
             });
         }
-        //console.log('header1=' + JSON.stringify(header1));
-        //console.log('header2=' + JSON.stringify(header2));
 
         // リスク一覧の明細の作成
         const detailRaw = [];
@@ -975,10 +487,8 @@ export default class Dam_BulkApproval extends LightningElement {
 
             // 対象の取得
             let isTarget = true;
-            if (this.searchCondition.control.searchConds) {
-                if (!controls || controls.length === 0) {
-                    isTarget = false;
-                }
+            if (!controls || controls.length === 0) {
+                isTarget = false;
             }
 
             if (isTarget) {
@@ -1093,7 +603,6 @@ export default class Dam_BulkApproval extends LightningElement {
                 }
             }
         });
-        //console.log('detailRaw=' + JSON.stringify(detailRaw));
 
         // リスク一覧の明細のページング
         const detailParPage = this.pagingRisklistDetail(detailRaw);
@@ -1103,7 +612,6 @@ export default class Dam_BulkApproval extends LightningElement {
         this.header1 = header1;
         this.header2 = header2;
         this.detailRaw = detailRaw;
-        console.log("🌻PQ__ __ file: dam_BulkApproval.js:1106 __ Dam_BulkApproval __ loadRisklist __ this.detailRaw", this.detailRaw)
         this.detail = detail;
     }
 
@@ -1173,12 +681,10 @@ export default class Dam_BulkApproval extends LightningElement {
             this.pageInfo.pageNumber = this.pageInfo.lastPageNumber;
         }
         this.pageInfo.rowNumberOffset = (this.pageInfo.pageNumber - 1) * this.pageInfo.pageSize;
-        //console.log('pageInfo=' + JSON.stringify(this.pageInfo));
 
         const startIndex = this.pageInfo.rowNumberOffset;
         const endIndex = this.pageInfo.pageNumber * this.pageInfo.pageSize;
         const detailParPage = detailRaw.slice(startIndex, endIndex);
-        //console.log('detailParPage=' + JSON.stringify(detailParPage));
 
         return detailParPage;
     }
@@ -1247,7 +753,6 @@ export default class Dam_BulkApproval extends LightningElement {
                 cell.rowspan = rowspan;
             });
         }
-        //console.log('detail=' + JSON.stringify(detail));
 
         return detail;
     }
@@ -1294,27 +799,6 @@ export default class Dam_BulkApproval extends LightningElement {
             ret += ' slds-is-sorted';
         }
         return ret;
-    }
-
-    // 明細のエラーチェック
-    checkDetailError() {
-        const errNos = [];
-        this.detailRaw.forEach((rec, index) => {
-            rec.forEach(cell => {
-                if (cell.item.isError) {
-                    const no = index + 1;
-                    if (errNos.indexOf(no) < 0) {
-                        errNos.push(no);
-                    }
-                }
-            });
-        });
-        let errMsg = null;
-        if (errNos.length > 0) {
-            errMsg = label_editError + '(No.' + errNos.join(', ') + ')';
-        }
-        this.errorMessages = (!errMsg ? null : getErrorMessages(errMsg));
-        return !errMsg;
     }
 
     // 明細の項目の作成
@@ -1546,45 +1030,6 @@ export default class Dam_BulkApproval extends LightningElement {
             }
         }
         return ret;
-    }
-
-    // 表示項目設定ダイアログを開く
-    openDisplayFieldsSettingDialog() {
-        const dialog = this.template.querySelector('[data-name="display-fields-setting-dialog"]');
-        dialog.classList.remove('slds-hide');
-        dialog.classList.add('slds-fade-in-open');
-        const backdrop = this.template.querySelector('[data-name="dialog-backdrop"]');
-        backdrop.classList.add('slds-backdrop_open');
-    }
-
-    // 表示項目設定ダイアログを閉じる
-    closeDisplayFieldsSettingDialog() {
-        const dialog = this.template.querySelector('[data-name="display-fields-setting-dialog"]');
-        dialog.classList.add('slds-hide');
-        dialog.classList.remove('slds-fade-in-open');
-        const backdrop = this.template.querySelector('[data-name="dialog-backdrop"]');
-        backdrop.classList.remove('slds-backdrop_open');
-    }
-
-    // 検索条件ダイアログを開く
-    openSearchConditionDialog() {
-        const dialog = this.template.querySelector('[data-name="search-condition-dialog"]');
-        dialog.classList.remove('slds-hide');
-        dialog.classList.add('slds-fade-in-open');
-        const backdrop = this.template.querySelector('[data-name="dialog-backdrop"]');
-        backdrop.classList.add('slds-backdrop_open');
-    }
-
-    // 検索条件ダイアログを閉じる
-    closeSearchConditionDialog() {
-        const dialog = this.template.querySelector('[data-name="search-condition-dialog"]');
-        // モーダル内のセクションを開くと、モーダルを閉じても、
-        // 見えないセクションが前面に表示されて、リンクをクリックなどができないため、
-        // 非表示（slds-hide）の切り替えを追加しています。
-        dialog.classList.add('slds-hide');
-        dialog.classList.remove('slds-fade-in-open');
-        const backdrop = this.template.querySelector('[data-name="dialog-backdrop"]');
-        backdrop.classList.remove('slds-backdrop_open');
     }
 
     handleOpenCommentApprovalDialog(event) {
