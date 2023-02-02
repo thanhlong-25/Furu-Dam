@@ -1388,7 +1388,6 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
 
     // デフォルトの列幅スタイルの取得
     getDefaultColumnWidthStyle(type) {
-        console.log("🌻PQ__ __ file: dam_ProjectRisklistApproval.js:1391 __ Dam_ProjectRisklistApproval __ getDefaultColumnWidthStyle __ type", type)
         let ret = 'width: 120px;';
         if (type === null) {
             ret = 'width:auto;';

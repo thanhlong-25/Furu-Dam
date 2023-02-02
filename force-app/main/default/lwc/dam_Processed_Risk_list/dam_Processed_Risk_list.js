@@ -1057,9 +1057,7 @@ export default class Dam_Processed_Risk_list extends LightningElement {
 
         this.header1 = header1;
         this.header2 = header2;
-        console.log("🌻PQ__ __ file: dam_Processed_Risk_list.js:1060 __ Dam_Processed_Risk_list __ loadRisklist __ this.header2", this.header2)
         this.detailRaw = detailRaw;
-        console.log("🌻PQ__ __ file: dam_Processed_Risk_list.js:1061 __ Dam_Processed_Risk_list __ loadRisklist __ this.detailRaw", this.detailRaw)
         this.detail = detail;
     }
 

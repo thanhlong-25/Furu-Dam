@@ -1,25 +1,23 @@
 <template>
-    <lightning-card icon-name="custom:custom76"
-        class="main"
-    >
+    <lightning-card icon-name="custom:custom76" class="main">
         <lightning-spinner if:true={isProcessing} alternative-text="Processing" variant="brand"></lightning-spinner>
         <div slot="title">
             <span class="title">{label.title}</span>
         </div>
         <div slot="actions">
             <lightning-button-group>
-                <lightning-button-icon icon-name="utility:search"
-                    alternative-text={label.searchCondition} title={label.searchCondition}
-                    onclick={handleSearchConditionClick}></lightning-button-icon>
-                <lightning-button-icon icon-name="utility:table_settings"
-                    alternative-text={label.displayFieldsSetting} title={label.displayFieldsSetting}
+                <lightning-button-icon icon-name="utility:search" alternative-text={label.searchCondition}
+                    title={label.searchCondition} onclick={handleSearchConditionClick}></lightning-button-icon>
+                <lightning-button-icon icon-name="utility:table_settings" alternative-text={label.displayFieldsSetting}
+                    title={label.displayFieldsSetting}
                     onclick={handleDisplayFieldsSettingClick}></lightning-button-icon>
             </lightning-button-group>
         </div>
         <div class="">
-            <div if:true={errorMessages}
-                class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
-                <lightning-icon icon-name="utility:error" size="x-small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+            <div if:true={errorMessages} class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error"
+                role="alert">
+                <lightning-icon icon-name="utility:error" size="x-small" variant="inverse"
+                    class="slds-m-right_x-small"></lightning-icon>
                 <h2>
                     <template for:each={errorMessages} for:item="errMsg">
                         <p key={errMsg}>{errMsg}</p>
@@ -45,53 +43,44 @@
                 </div>
                 <div class="slds-col slds-grow-none">
                     <div class="slds-text-body_regular">
-                        <a if:true={isFirstPageEnable}
-                            href="javascript:void(0);"
-                            data-name="first-page"
+                        <a if:true={isFirstPageEnable} href="javascript:void(0);" data-name="first-page"
                             onclick={handlePageMoveClick}>{label.list_first}</a>
                         <span if:false={isFirstPageEnable} class="slds-text-color_weak">{label.list_first}</span>
                     </div>
                 </div>
                 <div class="slds-col slds-grow-none">
                     <div class="slds-text-body_regular">
-                        <a if:true={isPreviousPageEnable}
-                            href="javascript:void(0);"
-                            data-name="previous-page"
+                        <a if:true={isPreviousPageEnable} href="javascript:void(0);" data-name="previous-page"
                             onclick={handlePageMoveClick}>{label.list_previous}</a>
                         <span if:false={isPreviousPageEnable} class="slds-text-color_weak">{label.list_previous}</span>
                     </div>
                 </div>
                 <div class="slds-col slds-grow-none">
                     <div class="slds-text-body_regular">
-                        <a if:true={isNextPageEnable}
-                            href="javascript:void(0);"
-                            data-name="next-page"
+                        <a if:true={isNextPageEnable} href="javascript:void(0);" data-name="next-page"
                             onclick={handlePageMoveClick}>{label.list_next}</a>
                         <span if:false={isNextPageEnable} class="slds-text-color_weak">{label.list_next}</span>
                     </div>
                 </div>
                 <div class="slds-col slds-grow-none">
                     <div class="slds-text-body_regular">
-                        <a if:true={isLastPageEnable}
-                            href="javascript:void(0);"
-                            data-name="last-page"
+                        <a if:true={isLastPageEnable} href="javascript:void(0);" data-name="last-page"
                             onclick={handlePageMoveClick}>{label.list_last}</a>
                         <span if:false={isLastPageEnable} class="slds-text-color_weak">{label.list_last}</span>
                     </div>
                 </div>
             </div>
-            <div class="slds-m-horizontal_small slds-m-bottom_small slds-scrollable slds-is-relative" style={risklistWrapStyle}
-                onmousemove={handleColumnWidthMousemove}
-                onmouseup={handleColumnWidthMouseup}
-                onscroll={handleRisklistWrapScroll}
-            >
+            <div class="slds-m-horizontal_small slds-m-bottom_small slds-scrollable slds-is-relative"
+                style={risklistWrapStyle} onmousemove={handleColumnWidthMousemove} onmouseup={handleColumnWidthMouseup}
+                onscroll={handleRisklistWrapScroll}>
                 <!-- 固定見出し（上） -->
                 <div class="slds-is-absolute fixedHeaderTop" style={fixedHeaderTop.style}>
                     <table class="slds-table slds-no-row-hover slds-table_resizable-cols risklist">
                         <thead>
                             <tr class="slds-line-height_reset">
-                                <th class="" scope="col" rowspan="2" >
-                                    <div class="recordNo header slds-text-align_center"><input type="checkbox" onclick={handleClickAll} name="checkAll"/></div>
+                                <th class="" scope="col" rowspan="2">
+                                    <div class="recordNo header slds-text-align_center"><input type="checkbox"
+                                            onclick={handleClickAll} name="checkAll" /></div>
                                 </th>
                                 <template if:true={header1} for:each={header1} for:item="cell">
                                     <th key={cell} colspan={cell.colspan} class="" scope="col">
@@ -102,25 +91,29 @@
                             <tr class="slds-line-height_reset">
                                 <template if:true={header2} for:each={header2} for:item="cell">
                                     <th key={cell} class={cell.cellClass} scope="col">
-                                        <a class="slds-th__action slds-text-link_reset" href="javascript:void(0);" role="button" tabindex="0"
-                                            data-col={cell.col}
+                                        <a class="slds-th__action slds-text-link_reset" href="javascript:void(0);"
+                                            role="button" tabindex="0" data-col={cell.col}
                                             onclick={handleColumnSortClick}>
                                             <span class="slds-assistive-text">Sort by: </span>
                                             <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center col-width"
                                                 style={cell.colWidthStyle}>
-                                                <div style="white-space: normal; word-break: break-all;" title={cell.helpText}>{cell.text}</div>
+                                                <div style="white-space: normal; word-break: break-all;"
+                                                    title={cell.helpText}>{cell.text}</div>
                                                 <span class="slds-icon_container slds-icon-utility-arrowdown">
-                                                    <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
-                                                        <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                                                    <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon"
+                                                        aria-hidden="true">
+                                                        <use
+                                                            xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#arrowdown">
+                                                        </use>
                                                     </svg>
                                                 </span>
                                             </div>
                                         </a>
                                         <div class="slds-resizable">
-                                            <input type="range" aria-label="" class="slds-resizable__input slds-assistive-text"
-                                                max="1000" min="20" tabindex="0" />
-                                            <span class="slds-resizable__handle"
-                                                data-col={cell.col}
+                                            <input type="range" aria-label=""
+                                                class="slds-resizable__input slds-assistive-text" max="1000" min="20"
+                                                tabindex="0" />
+                                            <span class="slds-resizable__handle" data-col={cell.col}
                                                 onmousedown={handleColumnWidthMousedown}>
                                                 <span class="slds-resizable__divider"></span>
                                             </span>
@@ -135,7 +128,7 @@
                 <table class="slds-table slds-no-row-hover slds-table_resizable-cols risklist">
                     <thead style="visibility:hidden;">
                         <tr class="slds-line-height_reset">
-                            <th class="" scope="col" rowspan="2" >
+                            <th class="" scope="col" rowspan="2">
                                 <div class="recordNo header"></div>
                             </th>
                             <template if:true={header1} for:each={header1} for:item="cell">
@@ -147,25 +140,28 @@
                         <tr class="slds-line-height_reset">
                             <template if:true={header2} for:each={header2} for:item="cell">
                                 <th key={cell} class={cell.cellClass} scope="col">
-                                    <a class="slds-th__action slds-text-link_reset" href="javascript:void(0);" role="button" tabindex="0"
-                                        data-col={cell.col}
-                                        onclick={handleColumnSortClick}>
+                                    <a class="slds-th__action slds-text-link_reset" href="javascript:void(0);"
+                                        role="button" tabindex="0" data-col={cell.col} onclick={handleColumnSortClick}>
                                         <span class="slds-assistive-text">Sort by: </span>
                                         <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center col-width"
-                                                style={cell.colWidthStyle}>
-                                            <div style="white-space: normal; word-break: break-all;" title={cell.text}>{cell.text}</div>
+                                            style={cell.colWidthStyle}>
+                                            <div style="white-space: normal; word-break: break-all;" title={cell.text}>
+                                                {cell.text}</div>
                                             <span class="slds-icon_container slds-icon-utility-arrowdown">
-                                                <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
-                                                    <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                                                <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon"
+                                                    aria-hidden="true">
+                                                    <use
+                                                        xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#arrowdown">
+                                                    </use>
                                                 </svg>
                                             </span>
                                         </div>
                                     </a>
                                     <div class="slds-resizable">
-                                        <input type="range" aria-label="" class="slds-resizable__input slds-assistive-text"
-                                            max="1000" min="20" tabindex="0" />
-                                        <span class="slds-resizable__handle"
-                                            data-col={cell.col}
+                                        <input type="range" aria-label=""
+                                            class="slds-resizable__input slds-assistive-text" max="1000" min="20"
+                                            tabindex="0" />
+                                        <span class="slds-resizable__handle" data-col={cell.col}
                                             onmousedown={handleColumnWidthMousedown}>
                                             <span class="slds-resizable__divider"></span>
                                         </span>
@@ -179,19 +175,22 @@
                             <tr key={record} class={record.rowClass}>
                                 <template for:each={record.cells} for:item="cell">
                                     <td key={cell} rowspan={cell.rowspan}>
-                                        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center" style={cell.colWidthStyle}>
+                                        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+                                            style={cell.colWidthStyle}>
                                             <span title={cell.item.text}>
                                                 <template if:true={cell.item.isCheckboxCol}>
                                                     <div class="recordNo">
                                                         <div class="slds-truncate slds-text-align_center">
-                                                            <input type="checkbox" name="approval-checkboxes" onclick={updateCheckbox} value={cell.item.riskId}/>
+                                                            <input type="checkbox" name="approval-checkboxes"
+                                                                onclick={updateCheckbox} value={cell.item.riskId} />
                                                         </div>
                                                     </div>
                                                 </template>
                                                 <template if:false={cell.item.isCheckboxCol}>
                                                     <span if:false={cell.item.url}>
                                                         <template if:true={cell.item.isIncidentLinksField}>
-                                                            <lightning-formatted-rich-text value={cell.item.text}></lightning-formatted-rich-text>
+                                                            <lightning-formatted-rich-text
+                                                                value={cell.item.text}></lightning-formatted-rich-text>
                                                         </template>
                                                         <template if:false={cell.item.isIncidentLinksField}>
                                                             {cell.item.text}
@@ -212,19 +211,22 @@
             </div>
         </div>
         <div slot="footer">
-                <template if:true={hasCheckedRow}>
-                    <lightning-button label="承認" variant="brand" class="slds-m-horizontal_x-small" name="Approve"
-                        onclick={handleOpenCommentApprovalDialog}></lightning-button>
-                    <lightning-button label='差戻し' variant="brand" class="slds-m-horizontal_x-small" name="Reject"
-                        onclick={handleOpenCommentApprovalDialog}></lightning-button>
-                </template>
-                <template if:false={hasCheckedRow}>
-                    <lightning-button label="承認" variant="brand" class="slds-m-horizontal_x-small" disabled></lightning-button>
-                    <lightning-button label='差戻し' variant="brand" class="slds-m-horizontal_x-small" disabled></lightning-button>
-                </template>
+            <template if:true={hasCheckedRow}>
+                <lightning-button label="承認" variant="brand" class="slds-m-horizontal_x-small" name="Approve"
+                    onclick={handleOpenCommentApprovalDialog}></lightning-button>
+                <lightning-button label='差戻し' variant="brand" class="slds-m-horizontal_x-small" name="Reject"
+                    onclick={handleOpenCommentApprovalDialog}></lightning-button>
+            </template>
+            <template if:false={hasCheckedRow}>
+                <lightning-button label="承認" variant="brand" class="slds-m-horizontal_x-small"
+                    disabled></lightning-button>
+                <lightning-button label='差戻し' variant="brand" class="slds-m-horizontal_x-small"
+                    disabled></lightning-button>
+            </template>
         </div>
     </lightning-card>
-    <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-hide" data-name="display-fields-setting-dialog">
+    <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-hide"
+        data-name="display-fields-setting-dialog">
         <div class="slds-modal__container">
             <header class="slds-modal__header">
                 <lightning-button icon-name="utility:close" variant="base"
@@ -234,30 +236,22 @@
                 <h2 class="slds-modal__title slds-hyphenate">{label.displayFieldsSetting}</h2>
             </header>
             <div class="slds-modal__content slds-p-around_medium">
-                <div if:true={isEditing} class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning" role="alert">
-                    <lightning-icon icon-name="utility:warning" size="x-small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+                <div if:true={isEditing}
+                    class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning" role="alert">
+                    <lightning-icon icon-name="utility:warning" size="x-small" variant="inverse"
+                        class="slds-m-right_x-small"></lightning-icon>
                     <h2>{label.editWarning}</h2>
                 </div>
                 <div class="slds-m-bottom_small">
-                    <lightning-dual-listbox
-                        label={label.risk}
-                        source-label={label.selectable}
-                        selected-label={label.selected}
-                        options={riskDisplayFieldNameSels}
-                        value={dispFieldNameTemp.risk}
-                        size="3"
-                        required
+                    <lightning-dual-listbox label={label.risk} source-label={label.selectable}
+                        selected-label={label.selected} options={riskDisplayFieldNameSels}
+                        value={dispFieldNameTemp.risk} size="3" required
                         onchange={handleRiskDisplayFieldNameChange}></lightning-dual-listbox>
                 </div>
                 <div class="slds-m-bottom_small">
-                    <lightning-dual-listbox
-                        label={label.control}
-                        source-label={label.selectable}
-                        selected-label={label.selected}
-                        options={controlDisplayFieldNameSels}
-                        value={dispFieldNameTemp.control}
-                        size="3"
-                        required
+                    <lightning-dual-listbox label={label.control} source-label={label.selectable}
+                        selected-label={label.selected} options={controlDisplayFieldNameSels}
+                        value={dispFieldNameTemp.control} size="3" required
                         onchange={handleControlDisplayFieldNameChange}></lightning-dual-listbox>
                 </div>
             </div>
@@ -270,7 +264,8 @@
         </div>
     </section>
 
-    <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-modal_small slds-hide" data-name="search-condition-dialog">
+    <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-modal_small slds-hide"
+        data-name="search-condition-dialog">
         <div class="slds-modal__container">
             <header class="slds-modal__header">
                 <lightning-button icon-name="utility:close" variant="base"
@@ -280,8 +275,10 @@
                 <h2 class="slds-modal__title slds-hyphenate">{label.searchCondition}</h2>
             </header>
             <div class="slds-modal__content slds-p-around_medium">
-                <div if:true={isEditing} class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning" role="alert">
-                    <lightning-icon icon-name="utility:warning" size="x-small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+                <div if:true={isEditing}
+                    class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning" role="alert">
+                    <lightning-icon icon-name="utility:warning" size="x-small" variant="inverse"
+                        class="slds-m-right_x-small"></lightning-icon>
                     <h2>{label.editWarning}</h2>
                 </div>
                 <div class="slds-section slds-is-open">
@@ -295,13 +292,8 @@
                                 </h3>
                             </div>
                             <div class="slds-col">
-                                <lightning-input type="toggle"
-                                    label=""
-                                    checked={searchCondTemp.risk.isEnabled}
-                                    message-toggle-active=""
-                                    message-toggle-inactive=""
-
-                                    variant="label-hidden"
+                                <lightning-input type="toggle" label="" checked={searchCondTemp.risk.isEnabled}
+                                    message-toggle-active="" message-toggle-inactive="" variant="label-hidden"
                                     onchange={handleRiskSearchCondEnableChange}>
                                 </lightning-input>
                             </div>
@@ -309,13 +301,9 @@
                     </div>
                     <div class={riskSearchCondClass}>
                         <div class="slds-m-horizontal_medium">
-                            <c-dam_-record-search-condition
-                                data-name="risk-serach-condition"
-                                object-name={riskObjectName}
-                                value={searchCondTempRisk}
-                                is-search-hide="true"
-                                onedit={handleRiskSearchCondEdit}
-                            ></c-dam_-record-search-condition>
+                            <c-dam_-record-search-condition data-name="risk-serach-condition"
+                                object-name={riskObjectName} value={searchCondTempRisk} is-search-hide="true"
+                                onedit={handleRiskSearchCondEdit}></c-dam_-record-search-condition>
                         </div>
                     </div>
                 </div>
@@ -330,12 +318,8 @@
                                 </h3>
                             </div>
                             <div class="slds-col">
-                                <lightning-input type="toggle"
-                                    label=""
-                                    checked={searchCondTemp.control.isEnabled}
-                                    message-toggle-active=""
-                                    message-toggle-inactive=""
-                                    variant="label-hidden"
+                                <lightning-input type="toggle" label="" checked={searchCondTemp.control.isEnabled}
+                                    message-toggle-active="" message-toggle-inactive="" variant="label-hidden"
                                     onchange={handleControlSearchCondEnableChange}>
                                 </lightning-input>
                             </div>
@@ -343,13 +327,9 @@
                     </div>
                     <div class={controlSearchCondClass}>
                         <div class="slds-m-horizontal_medium">
-                            <c-dam_-record-search-condition
-                                data-name="control-serach-condition"
-                                object-name={controlObjectName}
-                                value={searchCondTempControl}
-                                is-search-hide="true"
-                                onedit={handleControlSearchCondEdit}
-                            ></c-dam_-record-search-condition>
+                            <c-dam_-record-search-condition data-name="control-serach-condition"
+                                object-name={controlObjectName} value={searchCondTempControl} is-search-hide="true"
+                                onedit={handleControlSearchCondEdit}></c-dam_-record-search-condition>
                         </div>
                     </div>
                 </div>
@@ -363,7 +343,8 @@
         </div>
     </section>
 
-    <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-hide" data-name="display-comment-dialog">
+    <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-hide"
+        data-name="display-comment-dialog">
         <div class="slds-modal__container">
             <header class="slds-modal__header">
                 <lightning-button icon-name="utility:close" variant="base"
@@ -379,12 +360,8 @@
             <div class="slds-modal__content slds-p-around_medium">
                 <div class="slds-grid slds-gutters slds-grid_align-center slds-grid_vertical-align-center">
                     <div class="slds-col slds-size_1-of-1 slds-is-relative">
-                        <lightning-textarea
-                            class="comment"
-                            label={label.label_comment}
-                            value={comment}
-                            onchange={handleCommentChange}
-                        ></lightning-textarea>
+                        <lightning-textarea class="comment" label={label.label_comment} value={comment}
+                            onchange={handleCommentChange}></lightning-textarea>
                     </div>
                 </div>
             </div>
@@ -393,17 +370,18 @@
                     onclick={handleCloseCommentApprovalDialog}></lightning-button>
                 <template if:true={isApproveActionProcess}>
                     <lightning-button label={label.label_approve} variant="brand" class="slds-m-horizontal_xx-small"
-                    onclick={handleOpenSubmitApprovalDialog}></lightning-button>
+                        onclick={handleOpenSubmitApprovalDialog}></lightning-button>
                 </template>
                 <template if:false={isApproveActionProcess}>
                     <lightning-button label={label.label_reject} variant="brand" class="slds-m-horizontal_xx-small"
-                    onclick={handleOpenSubmitApprovalDialog}></lightning-button>
+                        onclick={handleOpenSubmitApprovalDialog}></lightning-button>
                 </template>
             </footer>
         </div>
     </section>
 
-    <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-hide" data-name="display-submit-approval-dialog">
+    <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-hide"
+        data-name="display-submit-approval-dialog">
         <div class="slds-modal__container">
             <header class="slds-modal__header">
                 <lightning-button icon-name="utility:close" variant="base"
@@ -418,9 +396,10 @@
             </header>
             <div class="slds-modal__content slds-p-around_medium">
                 <div class="slds-grid slds-gutters slds-grid_align-center slds-grid_vertical-align-center">
-                    <div class="slds-col slds-size_1-of-1 slds-is-relative" style="margin-bottom: -15px;text-align:center;">
-                        {label.approvalSubmit_submit_confirm_1}<br/><br/>
-                        {label.approvalSubmit_submit_list_count}：{checklist_count}<br/>
+                    <div class="slds-col slds-size_1-of-1 slds-is-relative"
+                        style="margin-bottom: -15px;text-align:center;">
+                        {label.approvalSubmit_submit_confirm_1}<br /><br />
+                        {label.approvalSubmit_submit_list_count}：{checklist_count}<br />
                     </div>
                 </div>
             </div>

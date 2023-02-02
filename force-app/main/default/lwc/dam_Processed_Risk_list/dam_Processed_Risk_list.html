@@ -123,9 +123,7 @@
                 <table class="slds-table slds-no-row-hover slds-table_resizable-cols risklist">
                     <thead style="visibility:hidden;">
                         <tr class="slds-line-height_reset">
-                            <th class="" scope="col" rowspan="2">
-                                <div class="recordNo header"></div>
-                            </th>
+
                             <template if:true={header1} for:each={header1} for:item="cell">
                                 <th key={cell} colspan={cell.colspan} class="" scope="col">
                                     <div class="slds-truncate header1-item" title={cell.text}>{cell.text}</div>
