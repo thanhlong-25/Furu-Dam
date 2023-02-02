@@ -106,9 +106,9 @@
                                             data-col={cell.col}
                                             onclick={handleColumnSortClick}>
                                             <span class="slds-assistive-text">Sort by: </span>
-                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate col-width"
+                                            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center col-width"
                                                 style={cell.colWidthStyle}>
-                                                <div class="slds-truncate" title={cell.text}>{cell.text}</div>
+                                                <div style="white-space: normal; word-break: break-all;" title={cell.helpText}>{cell.text}</div>
                                                 <span class="slds-icon_container slds-icon-utility-arrowdown">
                                                     <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
                                                         <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
@@ -151,9 +151,9 @@
                                         data-col={cell.col}
                                         onclick={handleColumnSortClick}>
                                         <span class="slds-assistive-text">Sort by: </span>
-                                        <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate col-width"
-                                            style={cell.colWidthStyle}>
-                                            <div class="slds-truncate" title={cell.text}>{cell.text}</div>
+                                        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center col-width"
+                                                style={cell.colWidthStyle}>
+                                            <div style="white-space: normal; word-break: break-all;" title={cell.text}>{cell.text}</div>
                                             <span class="slds-icon_container slds-icon-utility-arrowdown">
                                                 <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
                                                     <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
@@ -214,9 +214,9 @@
         <div slot="footer">
                 <template if:true={hasCheckedRow}>
                     <lightning-button label="承認" variant="brand" class="slds-m-horizontal_x-small" name="Approve"
-                        onclick={handleOpenCommentDialog}></lightning-button>
+                        onclick={handleOpenCommentApprovalDialog}></lightning-button>
                     <lightning-button label='差戻し' variant="brand" class="slds-m-horizontal_x-small" name="Reject"
-                        onclick={handleOpenCommentDialog}></lightning-button>
+                        onclick={handleOpenCommentApprovalDialog}></lightning-button>
                 </template>
                 <template if:false={hasCheckedRow}>
                     <lightning-button label="承認" variant="brand" class="slds-m-horizontal_x-small" disabled></lightning-button>
@@ -300,7 +300,7 @@
                                     checked={searchCondTemp.risk.isEnabled}
                                     message-toggle-active=""
                                     message-toggle-inactive=""
-                                    
+
                                     variant="label-hidden"
                                     onchange={handleRiskSearchCondEnableChange}>
                                 </lightning-input>
@@ -369,14 +369,19 @@
                 <lightning-button icon-name="utility:close" variant="base"
                     class="slds-modal__close slds-button_icon-inverse"
                     onclick={handleCloseCommentApprovalDialog}></lightning-button>
-                <h2 class="slds-modal__title slds-hyphenate">{actionProcess} {label.riskLabel}</h2>
+                <template if:true={isApproveActionProcess}>
+                    <h2 class="slds-modal__title slds-hyphenate">{label.label_approvalTitle}</h2>
+                </template>
+                <template if:false={isApproveActionProcess}>
+                    <h2 class="slds-modal__title slds-hyphenate">{label.label_rejectTitle}</h2>
+                </template>
             </header>
             <div class="slds-modal__content slds-p-around_medium">
                 <div class="slds-grid slds-gutters slds-grid_align-center slds-grid_vertical-align-center">
                     <div class="slds-col slds-size_1-of-1 slds-is-relative">
                         <lightning-textarea
                             class="comment"
-                            label="Comments"
+                            label={label.label_comment}
                             value={comment}
                             onchange={handleCommentChange}
                         ></lightning-textarea>
@@ -384,12 +389,49 @@
                 </div>
             </div>
             <footer class="slds-modal__footer">
-                <lightning-button label="Cancel" class="slds-m-horizontal_xx-small"
+                <lightning-button label={label.label_approvalCancel} class="slds-m-horizontal_xx-small"
                     onclick={handleCloseCommentApprovalDialog}></lightning-button>
-                <lightning-button label={actionProcess} variant="brand" class="slds-m-horizontal_xx-small"
+                <template if:true={isApproveActionProcess}>
+                    <lightning-button label={label.label_approve} variant="brand" class="slds-m-horizontal_xx-small"
+                    onclick={handleOpenSubmitApprovalDialog}></lightning-button>
+                </template>
+                <template if:false={isApproveActionProcess}>
+                    <lightning-button label={label.label_reject} variant="brand" class="slds-m-horizontal_xx-small"
+                    onclick={handleOpenSubmitApprovalDialog}></lightning-button>
+                </template>
+            </footer>
+        </div>
+    </section>
+
+    <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-hide" data-name="display-submit-approval-dialog">
+        <div class="slds-modal__container">
+            <header class="slds-modal__header">
+                <lightning-button icon-name="utility:close" variant="base"
+                    class="slds-modal__close slds-button_icon-inverse"
+                    onclick={handleCloseSubmitApprovalDialog}></lightning-button>
+                <template if:true={isApproveActionProcess}>
+                    <h2 class="slds-modal__title slds-hyphenate">{label.label_approvalTitle}</h2>
+                </template>
+                <template if:false={isApproveActionProcess}>
+                    <h2 class="slds-modal__title slds-hyphenate">{label.label_rejectTitle}</h2>
+                </template>
+            </header>
+            <div class="slds-modal__content slds-p-around_medium">
+                <div class="slds-grid slds-gutters slds-grid_align-center slds-grid_vertical-align-center">
+                    <div class="slds-col slds-size_1-of-1 slds-is-relative" style="margin-bottom: -15px;text-align:center;">
+                        {label.approvalSubmit_submit_confirm_1}<br/><br/>
+                        {label.approvalSubmit_submit_list_count}：{checklist_count}<br/>
+                    </div>
+                </div>
+            </div>
+            <footer class="slds-modal__footer">
+                <lightning-button label={label.label_approvalCancel} class="slds-m-horizontal_xx-small"
+                    onclick={handleCloseSubmitApprovalDialog}></lightning-button>
+                <lightning-button label="実行" variant="brand" class="slds-m-horizontal_xx-small"
                     onclick={handleSubmitApprovalDialog}></lightning-button>
             </footer>
         </div>
     </section>
+
     <div class="slds-backdrop" data-name="dialog-backdrop"></div>
 </template>

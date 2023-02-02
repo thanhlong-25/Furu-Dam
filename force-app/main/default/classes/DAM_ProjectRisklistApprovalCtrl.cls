@@ -882,6 +882,11 @@ public with sharing class DAM_ProjectRisklistApprovalCtrl {
         return currentRoleIds;
     }
 
+	@AuraEnabled
+	public static Boolean checkRiskManagerPermission() {
+		return FeatureManagement.checkPermission('ermt__Risk_Manager');
+	}
+
     public class FieldDescribe {
         @AuraEnabled public String name;
         @AuraEnabled public String label;

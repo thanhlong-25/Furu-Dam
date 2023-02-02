@@ -114,8 +114,8 @@ export default class Dam_FieldValueInput extends LightningElement {
     @wire(getPicklistValuesByRecordType, { objectApiName: '$objectName', recordTypeId: '$recordTypeId' })
     optionsByRecordType({ error, data }) {
         if (data) {
-            //this.selectListByRecordType = [...data.picklistFieldValues[this.fieldName].values].map((element => {
-            this.selectListByRecordType = [...data.picklistFieldValues?.ermt__RiskCategory__c?.values].map((element => {
+            this.selectListByRecordType = [...data.picklistFieldValues[this.fieldName].values].map((element => {
+            //this.selectListByRecordType = [...data.picklistFieldValues?.ermt__RiskCategory__c?.values].map((element => {
                 return {
                     label: element.label , value: element.value
                 }
@@ -146,7 +146,8 @@ export default class Dam_FieldValueInput extends LightningElement {
                     , recordTypeId: this.recordTypeId // RecordTypeId for cacheable working
                 });
                 this.type = data.type;
-                this.selectList = (this.fieldName == 'ermt__RiskCategory__c') ? this.selectListByRecordType : undefineToNull(data.selectList);
+                //this.selectList = (this.fieldName == 'ermt__RiskCategory__c') ? this.selectListByRecordType : undefineToNull(data.selectList);
+                this.selectList = this.recordTypeId ? this.selectListByRecordType : undefineToNull(data.selectList);
                 this.parentObjectNameSels = undefineToNull(data.objectNameSels);
 
                 // 親オブジェクト名の取得
