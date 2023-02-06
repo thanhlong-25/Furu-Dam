@@ -1137,7 +1137,7 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
                             , recordTypeId: risk['RecordTypeId']
                             , isRequired: (fieldName === 'Name' ? true : !fieldDesc.isNillable)
                             , isIncidentLinksField: isIncidentLinksField
-                            , isEditable: (!isRiskEditable || isApprovalRisk || fieldName === 'RecordTypeId' || fieldName === 'ermt__ApprovalStatus__c' || isIncidentLinksField ? false : fieldDesc.isUpdateable)
+                            , isEditable: (!isRiskEditable || isApprovalRisk || fieldName === 'RecordTypeId' || fieldName === 'ermt__ApprovalStatus__c' || fieldName === 'Name' || isIncidentLinksField ? false : fieldDesc.isUpdateable)
                             , objectName: RISK_OBJECT.objectApiName
                             , fieldName: fieldName
                             , riskId: riskId
