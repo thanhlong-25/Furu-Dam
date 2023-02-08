@@ -145,7 +145,8 @@ public with sharing class DAM_FieldLookupCtlr {
                         if (fieldDesc.isAccessible()) {
                             fieldLabel = fieldLabel + (String.isEmpty(fieldLabel) ? '' : FIELD_LABEL_DELIMITER) + fieldDesc.getLabel();
                             ret.add(new Map<String, Object>{
-                                'label' => createFieldLabel(fieldLabel, fieldName)
+                                //'label' => createFieldLabel(fieldLabel, fieldName)
+                                'label' => fieldLabel
                                 , 'value' => fieldName
                             });
                         }

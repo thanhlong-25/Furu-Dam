@@ -1,0 +1,42 @@
+<template>
+    <!-- <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading-01"
+        class="slds-modal slds-fade-in-open slds-modal_small">
+        <div class="slds-modal__container">
+            <lightning-spinner if:true={isProcessing} alternative-text="Processing" variant="brand"></lightning-spinner>
+            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse">
+                <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                    <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
+                </svg>
+                <span class="slds-assistive-text">Cancel and close</span>
+            </button>
+            <div class="slds-modal__header">
+                <h1 id="modal-heading-01" class="slds-modal__title slds-hyphenate">{label.modal_title}</h1>
+            </div>
+            <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                <p style="text-align:center; font-size: 18; color: red">{errorMessage}</p>
+                {label.comment}
+                <lightning-textarea class="comment" style="margin-top: -15px;" rows="7"
+                    onchange={handleChangeComment}></lightning-textarea>
+            </div>
+            <div class="slds-modal__footer">
+                <button class="slds-button slds-button_neutral" aria-label="Cancel and close"
+                    onclick={handleCloseModal}>{label.cancel}</button>
+                <button class="slds-button slds-button_brand" onclick={handleSubmitApproval}>{label.submit}</button>
+            </div>
+        </div>
+    </section> -->
+
+    <lightning-spinner if:true={isProcessing} alternative-text="Processing" variant="brand"></lightning-spinner>
+    <lightning-quick-action-panel header={label.modal_title} style="width: 70%">
+        <p style="text-align:center; font-size: 18; color: red">{errorMessage}</p>
+        {label.comment}
+        <lightning-textarea class="comment" style="margin-top: -15px;"
+                    onchange={handleChangeComment}></lightning-textarea>
+
+        <div slot="footer">
+            <button class="slds-button slds-button_neutral" aria-label="Cancel and close"
+                    onclick={handleCloseModal}>{label.cancel}</button>
+            <button class="slds-button slds-button_brand" onclick={handleSubmitApproval}>Submit</button>
+        </div>
+    </lightning-quick-action-panel>
+</template>

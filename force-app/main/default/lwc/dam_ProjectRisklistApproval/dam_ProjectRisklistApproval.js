@@ -76,6 +76,7 @@ import getCustomFunctionSettingValue from '@salesforce/apex/DAM_CustomFunctionSe
 import setCustomFunctionSettingValue from '@salesforce/apex/DAM_CustomFunctionSettingCtlr.setCustomFunctionSettingValue';
 import getApprovalStatusSetting from '@salesforce/apex/DAM_ProjectRisklistApprovalCtrl.getApprovalStatusSetting';
 import multiApplyApproval from '@salesforce/apex/DAM_ProjectRisklistApprovalCtrl.multiApplyApproval';
+import checkRiskManagerPermission from '@salesforce/apex/DAM_ProjectRisklistApprovalCtrl.checkRiskManagerPermission';
 
 export default class Dam_ProjectRisklistApproval extends LightningElement {
     @api recordId; // レコードID
@@ -112,6 +113,7 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
     errorMessages = null; // エラーメッセージリスト
     isProcessing = false; // 処理中
     isShowEditControlModal = false; // flags open/close edit ermt__Control__c modal
+    isShowDisplayFieldSettingButton = true;
     @track editingControlId = null;
     isOriginalStyleRendered = false; // 独自スタイル描画済
     displayFieldName = this.defaultDisplayFieldName; // 表示項目名
@@ -299,7 +301,8 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
                 this.windowHeight = window.innerHeight;
             }, false);
 
-            // 検索条件の読込み
+            // 検索条件の読込みƠ
+            this.isShowDisplayFieldSettingButton = await checkRiskManagerPermission();
             await this.loadSearchCondition();
 
             // リスク一覧の読込み
@@ -415,7 +418,7 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
             this.searchCondTemp.riskAssessmentClassi.resultImpact.isEnabled = this.searchCondition.riskAssessmentClassi.resultImpact.isEnabled;
             this.searchCondTemp.riskAssessmentClassi.thirdEvaluation.isEnabled = this.searchCondition.riskAssessmentClassi.thirdEvaluation.isEnabled;
             this.searchCondTemp.control.isEnabled = this.searchCondition.control.isEnabled;
-
+1
             // リスクの検索条件
             if (this.searchCondition.risk.searchConds) {
                 this.searchCondTemp.risk.searchConds = this.searchCondition.risk.searchConds.map(searchCond => { return {...searchCond}; });
@@ -1042,6 +1045,7 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
                 colspan++;
                 header2.push({
                     text: this.getHeaderText(fieldDesc.label, fieldDesc.type)
+                    , helpText: fieldDesc.helpText
                     , col: col
                     , colWidthStyle: this.getDefaultColumnWidthStyle(fieldDesc.type)
                     , cellClass : this.getHeader2CellClass(true, false)
@@ -1064,6 +1068,7 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
                 colspan++;
                 header2.push({
                     text: (fieldName == 'Total_Of_Risk_Control_Junctions__c') ? label_referToTheSameControl : this.getHeaderText(fieldDesc.label, fieldDesc.type)
+                    , helpText: fieldDesc.helpText
                     , col: col
                     , colWidthStyle: this.getDefaultColumnWidthStyle(fieldDesc.type)
                     , cellClass : this.getHeader2CellClass(true, false)
@@ -1132,7 +1137,7 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
                             , recordTypeId: risk['RecordTypeId']
                             , isRequired: (fieldName === 'Name' ? true : !fieldDesc.isNillable)
                             , isIncidentLinksField: isIncidentLinksField
-                            , isEditable: (!isRiskEditable || isApprovalRisk || fieldName === 'RecordTypeId' || fieldName === 'ermt__ApprovalStatus__c' || isIncidentLinksField ? false : fieldDesc.isUpdateable)
+                            , isEditable: (!isRiskEditable || isApprovalRisk || fieldName === 'RecordTypeId' || fieldName === 'ermt__ApprovalStatus__c' || fieldName === 'Name' || isIncidentLinksField ? false : fieldDesc.isUpdateable)
                             , objectName: RISK_OBJECT.objectApiName
                             , fieldName: fieldName
                             , riskId: riskId
@@ -1176,7 +1181,6 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
                             let value = null;
                             let label = null;
                             let type = null;
-                            let isEditable = false;
                             let riskControlId = null;
                             let isInspectionSheetNoField = (fieldName === 'Inspection_Sheet_No__c') ? true : false;
                             if (control) {
@@ -1184,7 +1188,6 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
                                     value = undefineToNull(control.Id);
                                     label = undefineToNull(control[fieldName]);
                                     type = TYPE_REFERENCE;
-                                    isEditable = hasJuncWithApprovalRisk ? false : true;
                                     riskControlId = control.riskControlId;
                                 } else if (fieldName === 'Total_Of_Risk_Control_Junctions__c') {
                                     value = undefineToNull(control[fieldName]) >= 2 ? true : null;
@@ -1196,11 +1199,6 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
                                     name = fieldName + '_Label';
                                     label = undefineToNull(control[name]);
                                     type = fieldDesc.type;
-                                }
-                            } else {
-                                if (fieldName === 'Name') {
-                                    type = TYPE_REFERENCE;
-                                    isEditable = hasJuncWithApprovalRisk ? false : true;
                                 }
                             }
                             col++;
@@ -1216,7 +1214,7 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
                                     , type: type
                                     , isRequired: false
                                     , recordTypeId: null
-                                    , isEditable: isApprovalRisk ? false : isEditable
+                                    , isEditable: false
                                     , controlId: control ? undefineToNull(control.Id) : undefined
                                     , isInspectionSheetNoField: isInspectionSheetNoField
                                     , hasJuncWithApprovalRisk: hasJuncWithApprovalRisk
@@ -1390,11 +1388,11 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
 
     // デフォルトの列幅スタイルの取得
     getDefaultColumnWidthStyle(type) {
-        let ret = 'width:200px;';
+        let ret = 'width: 120px;';
         if (type === null) {
             ret = 'width:auto;';
         } else if (type === TYPE_BOOLEAN) {
-            ret = 'width:100px;';
+            ret = 'width:80px;';
         } else if (
             type === TYPE_INTEGER ||
             type === TYPE_LONG ||
@@ -1404,7 +1402,7 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
             type === TYPE_DATE ||
             type === TYPE_TIME
         ) {
-            ret = 'width:120px;';
+            ret = 'width:100px;';
         }
         return ret;
     }
@@ -1898,7 +1896,7 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
         dialog.classList.add('slds-fade-in-open');
         const backdrop = this.template.querySelector('[data-name="dialog-backdrop"]');
         backdrop.classList.add('slds-backdrop_open');
-     }
+    }
 
      handleCloseConfirmApprovalDialog() {
         const dialog = this.template.querySelector('[data-name="display-submit-confirm-dialog"]');
@@ -2052,19 +2050,25 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
         this.comment = event.detail.value;
     }
 
-    handleApproval(){
+    async handleApproval(){
         this.errorMessages = null;
+        this.isProcessing = true;
         try {
-           this.multiApplyApproval();
+           await this.multiApplyApproval();
 
            this.handleCloseConfirmApprovalDialog();
+           this.handleClearAllCheckbox();
+
+           await this.loadRisklist();
         } catch (error) {
             this.errorMessages = getErrorMessages(error);
         }
+        this.isProcessing = false;
    }
 
    async multiApplyApproval() {
-        this.isProcessing = true;
+
+
         const listRiskId = [];
         var checkedBoxes = this.template.querySelectorAll('input[name="approval-checkboxes"]:checked');
         for(var i=0; i<checkedBoxes.length; i++){
@@ -2085,7 +2089,6 @@ export default class Dam_ProjectRisklistApproval extends LightningElement {
         } else {
             this.errorMessages = getErrorMessages(result.errorMessage);
         }
-        this.isProcessing = false;
         return result;
     }
 }

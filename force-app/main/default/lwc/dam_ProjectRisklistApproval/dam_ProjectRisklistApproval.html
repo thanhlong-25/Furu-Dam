@@ -12,7 +12,7 @@
                 <lightning-button-icon icon-name="utility:search"
                     alternative-text={label.searchCondition} title={label.searchCondition}
                     onclick={handleSearchConditionClick}></lightning-button-icon>
-                <lightning-button-icon icon-name="utility:table_settings"
+                <lightning-button-icon if:true={isShowDisplayFieldSettingButton} icon-name="utility:table_settings"
                     alternative-text={label.displayFieldsSetting} title={label.displayFieldsSetting}
                     onclick={handleDisplayFieldsSettingClick}></lightning-button-icon>
             </lightning-button-group>
@@ -112,9 +112,9 @@
                                             data-col={cell.col}
                                             onclick={handleColumnSortClick}>
                                             <span class="slds-assistive-text">Sort by: </span>
-                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate col-width"
+                                            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center col-width"
                                                 style={cell.colWidthStyle}>
-                                                <div class="slds-truncate" title={cell.text}>{cell.text}</div>
+                                                <div style="white-space: normal; word-break: break-all;" title={cell.helpText}>{cell.text}</div>
                                                 <span class="slds-icon_container slds-icon-utility-arrowdown">
                                                     <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
                                                         <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
@@ -157,9 +157,9 @@
                                         data-col={cell.col}
                                         onclick={handleColumnSortClick}>
                                         <span class="slds-assistive-text">Sort by: </span>
-                                        <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate col-width"
-                                            style={cell.colWidthStyle}>
-                                            <div class="slds-truncate" title={cell.text}>{cell.text}</div>
+                                        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center col-width"
+                                                style={cell.colWidthStyle}>
+                                            <div style="white-space: normal; word-break: break-all;" title={cell.helpText}>{cell.text}</div>
                                             <span class="slds-icon_container slds-icon-utility-arrowdown">
                                                 <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
                                                     <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
@@ -406,6 +406,7 @@
                             <c-dam_-record-search-condition
                                 data-name="risk-serach-condition"
                                 object-name={riskObjectName}
+                                select-field-names={displayFieldName.risk}
                                 value={searchCondTempRisk}
                                 is-search-hide="true"
                                 onedit={handleRiskSearchCondEdit}
@@ -440,6 +441,7 @@
                             <c-dam_-record-search-condition
                                 data-name="control-serach-condition"
                                 object-name={controlObjectName}
+                                select-field-names={displayFieldName.control}
                                 value={searchCondTempControl}
                                 is-search-hide="true"
                                 onedit={handleControlSearchCondEdit}

@@ -144,6 +144,7 @@ public with sharing class DAM_ProjectRisklistApprovalCtrl {
 	public static ApprovalResult multiApplyApproval(String comment, List<String> riskIds, String projectId) {
         Savepoint sp = Database.setSavepoint();
         ApprovalResult approvalResult = new ApprovalResult();
+        List<ID> assignedApproverIds = new List<Id>();
         approvalResult.successCount = 0;
         approvalResult.failCount = 0;
         try {
@@ -155,10 +156,11 @@ public with sharing class DAM_ProjectRisklistApprovalCtrl {
                 approvalRequest.setComments(comment);
                 apps.add(approvalRequest);
             }
-            Approval.ProcessResult [] proResult = Approval.process(apps);
+            List<Approval.ProcessResult> proResult = Approval.process(apps);
             for (Approval.ProcessResult re: proResult){
                 if (re.isSuccess()){
                     approvalResult.successCount += 1;
+                    if(AssignedApproverIds.isEmpty()) assignedApproverIds = re.ActorIds;
                 } else {
                     approvalResult.failCount += 1;
                 }
@@ -167,6 +169,7 @@ public with sharing class DAM_ProjectRisklistApprovalCtrl {
 
             if(approvalResult.successCount > 0){
                 approvalAssign.No_Of_Applications__c = approvalResult.successCount;
+                approvalAssign.OwnerId = assignedApproverIds[0];
                 update approvalAssign;
 
                 List<ermt__Project__c> projects = [SELECT ID, Name, Assigned_Approver_01__c FROM ermt__Project__c WHERE ID =: projectId LIMIT 1];
@@ -878,6 +881,11 @@ public with sharing class DAM_ProjectRisklistApprovalCtrl {
         }
         return currentRoleIds;
     }
+
+	@AuraEnabled
+	public static Boolean checkRiskManagerPermission() {
+		return FeatureManagement.checkPermission('ermt__Risk_Manager');
+	}
 
     public class FieldDescribe {
         @AuraEnabled public String name;

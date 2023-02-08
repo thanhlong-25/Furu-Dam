@@ -131,7 +131,7 @@ public with sharing class DAM_BulkApproval {
                                                     AND ApprovalAssign__c =: approvalAssignId
                                                 ])
             {
-                arj.Approval_Status__c = action == 'Approve' ? APPROVE : REJECT;
+                arj.Approval_Status__c = action     == 'Approve' ? APPROVE : REJECT;
                 arjs.add(arj);
             }
             update arjs;

@@ -138,6 +138,7 @@ public with sharing class DAM_ProjectRisklistCtlr {
                     , String.valueOf(fieldDesc.getType())
                     , fieldDesc.isNillable()
                     , fieldDesc.isUpdateable()
+                    , fieldDesc.getInlineHelpText()
                 ));
             }
         }
@@ -160,6 +161,7 @@ public with sharing class DAM_ProjectRisklistCtlr {
                     , String.valueOf(fieldDesc.getType())
                     , fieldDesc.isNillable()
                     , fieldDesc.isUpdateable()
+                    , fieldDesc.getInlineHelpText()
                 ));
             }
         }
@@ -227,7 +229,7 @@ public with sharing class DAM_ProjectRisklistCtlr {
             }
         }
         query += ' FROM ermt__Risk__c';
-        query += ' WHERE ermt__Project__c = :projectId';
+        query += ' WHERE ermt__Project__c = :projectId'; System.debug(query);
         if (String.isNotEmpty(previousLastId) && previousLastRiskNo != null) {
             query += ' AND (Risk_No__c > :previousLastRiskNo';
             query += ' OR (Risk_No__c = :previousLastRiskNo AND Id > :previousLastId))';
@@ -397,20 +399,22 @@ public with sharing class DAM_ProjectRisklistCtlr {
         @AuraEnabled public String type; // データ型
         @AuraEnabled public Boolean isNillable; // 必須
         @AuraEnabled public Boolean isUpdateable; // 編集可
+        @AuraEnabled public String helpText;
 
-        // コンストラクタ
         public FieldDescribe(
             String name
             , String label
             , String type
             , Boolean isNillable
             , Boolean isUpdateable
+            , String helpText
         ) {
             this.name = name;
             this.label = label;
             this.type = type;
             this.isNillable = isNillable;
             this.isUpdateable = isUpdateable;
+            this.helpText = helpText;
         }
     }
 }

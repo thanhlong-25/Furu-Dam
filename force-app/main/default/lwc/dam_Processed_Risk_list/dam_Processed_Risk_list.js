@@ -7,7 +7,6 @@ import TIME_ZONE from '@salesforce/i18n/timeZone';
 import label_title from '@salesforce/label/ermt.ProjectRisklist_Title';
 import label_risk from '@salesforce/label/ermt.ObjectLabel_Risk';
 import label_control from '@salesforce/label/ermt.ObjectLabel_Control';
-import label_editError from '@salesforce/label/ermt.ProjectRisklist_EditError';
 import label_classiRecordType_analyseTiming from '@salesforce/label/c.ClassiRecordType_AnalyseTiming';
 import label_classiRecordType_probability from '@salesforce/label/c.ClassiRecordType_Probability';
 import label_classiRecordType_resultImpact from '@salesforce/label/c.ClassiRecordType_ResultImpact';
@@ -21,17 +20,6 @@ import label_list_previous from '@salesforce/label/ermt.List_Previous';
 import label_true from '@salesforce/label/ermt.Value_True';
 import label_false from '@salesforce/label/ermt.Value_False';
 import label_referToTheSameControl from '@salesforce/label/c.ProjectRisklist_ReferToTheSameControl';
-import label_approvalTitle from '@salesforce/label/c.ApprovalApprove_ApproveTitle';
-import label_comment from '@salesforce/label/c.ApprovalApprove_Comments';
-import label_approvalCancel from '@salesforce/label/c.ApprovalApprove_Cancel';
-import label_approve from '@salesforce/label/c.ApprovalApprove_Approve';
-import label_approveSuccess from '@salesforce/label/c.ApprovalApprove_ApproveSuccessTitle';
-import label_rejectTitle from '@salesforce/label/c.ApprovalApprove_RejectTitle';
-import label_reject from '@salesforce/label/c.ApprovalApprove_Reject';
-import label_rejectSuccess from '@salesforce/label/c.ApprovalApprove_RejectSuccessTitle';
-import label_approvalSubmit_title from '@salesforce/label/c.ApprovalSubmit_Title';
-import label_approvalSubmit_submit_confirm_1 from '@salesforce/label/c.ApprovalSubmit_Submit_Confirm_1';
-import label_approvalSubmit_submit_list_count from '@salesforce/label/c.ApprovalSubmit_Submit_List_Count';
 import RISK_OBJECT from '@salesforce/schema/ermt__Risk__c';
 import CONTROL_OBJECT from '@salesforce/schema/ermt__Control__c';
 import {
@@ -58,13 +46,13 @@ import {
 import getRisklistDisplayFieldName from '@salesforce/apex/DAM_ProjectRisklistCtlr.getRisklistDisplayFieldName';
 import getRiskFieldDescByName from '@salesforce/apex/DAM_ProjectRisklistCtlr.getRiskFieldDescByName';
 import getControlFieldDescByName from '@salesforce/apex/DAM_ProjectRisklistCtlr.getControlFieldDescByName';
-import getRisks from '@salesforce/apex/DAM_BulkApproval.getRisks';
+import getRisks from '@salesforce/apex/DAM_Processed_Risk_List_Ctlr.getRisks';
 import getControlsByRiskId from '@salesforce/apex/DAM_ProjectRisklistCtlr.getControlsByRiskId';
 import getApprovalAssignById from '@salesforce/apex/DAM_BulkApproval.getApprovalAssignById';
-import multiApprovalProcess from '@salesforce/apex/DAM_BulkApproval.multiApprovalProcess';
 
-export default class Dam_BulkApproval extends LightningElement {
+export default class Dam_Processed_Risk_list extends LightningElement {
     @api recordId; // レコードID
+    @api listType;
     // ラベル
     label = {
         title: label_title
@@ -77,31 +65,7 @@ export default class Dam_BulkApproval extends LightningElement {
         , list_next: label_list_next
         , list_previous: label_list_previous
         , riskLabel: ''
-        , approvalSubmit_title: label_approvalSubmit_title
-        , approvalSubmit_submit_confirm_1: label_approvalSubmit_submit_confirm_1
-        , approvalSubmit_submit_list_count: label_approvalSubmit_submit_list_count
-        , label_comment: label_comment
-        , label_approvalCancel: label_approvalCancel
-        , label_approvalTitle: label_approvalTitle
-        , label_approve: label_approve
-        , label_approveSuccess: label_approveSuccess
-        , label_rejectTitle: label_rejectTitle
-        , label_reject: label_reject
-        , label_rejectSuccess: label_rejectSuccess
     };
-
-    messageApproval = {
-        approve: {
-            action: this.label.label_approve
-            , action_title: this.label.label_approvalTitle
-            , success_title: this.label.label_approveSuccess
-        },
-         reject: {
-            action: this.label.label_reject
-            , action_title: this.label.label_rejectTitle
-            , success_title: this.label.label_rejectSuccess
-        }
-    }
 
     errorMessages = null; // エラーメッセージリスト
     isProcessing = false; // 処理中
@@ -119,9 +83,6 @@ export default class Dam_BulkApproval extends LightningElement {
     //Approval
     hasCheckedRow = false;
     checklist_count = null;
-    comment = null;
-    actionProcess = '';
-    isApproveActionProcess;
     approvalAssignInfo;
 
     // ページ情報
@@ -209,6 +170,7 @@ export default class Dam_BulkApproval extends LightningElement {
             // リスク一覧の読込み
             await this.loadRisklist();
         } catch (error) {
+            //console.log('error=' + JSON.stringify(error));
             this.errorMessages = getErrorMessages(error);
         }
         this.isProcessing = false;
@@ -271,8 +233,8 @@ export default class Dam_BulkApproval extends LightningElement {
         // 明細のソート
         this.detailRaw.sort((rec1, rec2) => {
             let ret = 0;
-            const cell1 = rec1[ col + 1 ];
-            const cell2 = rec2[ col + 1 ];
+            const cell1 = rec1[ col ];
+            const cell2 = rec2[ col ];
             if (cell1 && cell2) {
                 const value1 = this.getDetailSortValue(cell1.item.value, cell1.item.text, cell1.item.type);
                 const value2 = this.getDetailSortValue(cell2.item.value, cell2.item.text, cell2.item.type);
@@ -334,7 +296,7 @@ export default class Dam_BulkApproval extends LightningElement {
             cell.colWidthStyle = 'width:' + width + 'px';
         }
         this.detailRaw.forEach(rec => {
-            const cell = rec[ col + 1 ];
+            const cell = rec[ col ];
             if (cell) {
                 cell.colWidthStyle = 'width:' + width + 'px';
             }
@@ -395,16 +357,19 @@ export default class Dam_BulkApproval extends LightningElement {
         });
         displayFieldName = !displayFieldName ? null : JSON.parse(displayFieldName);
         this.displayFieldName = displayFieldName || this.defaultDisplayFieldName;
+        //console.log('displayFieldName=' + JSON.stringify(this.displayFieldName));
 
         // リスク項目説明マップの取得
         const riskFieldDescByName = await getRiskFieldDescByName({
             dispFieldNames: this.displayFieldName.risk
         });
+        //console.log('riskFieldDescByName=' + JSON.stringify(riskFieldDescByName));
 
         // 対応策項目説明マップの取得
         const controlFieldDescByName = await getControlFieldDescByName({
             dispFieldNames: this.displayFieldName.control
         });
+        //console.log('controlFieldDescByName=' + JSON.stringify(controlFieldDescByName));
 
         // リスクリストの取得
         const risks = await this.getRisks({
@@ -416,6 +381,8 @@ export default class Dam_BulkApproval extends LightningElement {
             , searchCondLogic: null
         });
 
+        // console.log('risks=' + JSON.stringify(risks));
+
         // 対応策リストマップの取得
         const controlsByRiskId = await this.getControlsByRiskId({
             projectId: this.approvalAssignInfo.Project__c
@@ -423,6 +390,8 @@ export default class Dam_BulkApproval extends LightningElement {
             , searchConds: null
             , searchCondLogic: null
         });
+
+        //console.log('controlsByRiskId=' + JSON.stringify(controlsByRiskId));
 
         // リスク一覧のヘッダの作成
         const header1 = [];
@@ -477,6 +446,8 @@ export default class Dam_BulkApproval extends LightningElement {
                 , colspan: colspan
             });
         }
+        //console.log('header1=' + JSON.stringify(header1));
+        //console.log('header2=' + JSON.stringify(header2));
 
         // リスク一覧の明細の作成
         const detailRaw = [];
@@ -501,12 +472,6 @@ export default class Dam_BulkApproval extends LightningElement {
                 // 明細の作成
                 // リスク
                 const riskItems = [];
-                riskItems.push({
-                    isCheckboxCol: true
-                    , riskId: riskId
-                    , objectName: RISK_OBJECT.objectApiName
-                    , type: null
-                })
                 this.displayFieldName.risk.forEach(fieldName => {
                     const fieldDesc = riskFieldDescByName[ fieldName ];
                     if (fieldDesc) {
@@ -603,6 +568,7 @@ export default class Dam_BulkApproval extends LightningElement {
                 }
             }
         });
+        //console.log('detailRaw=' + JSON.stringify(detailRaw));
 
         // リスク一覧の明細のページング
         const detailParPage = this.pagingRisklistDetail(detailRaw);
@@ -633,6 +599,7 @@ export default class Dam_BulkApproval extends LightningElement {
                 , searchCondLogic: param.searchCondLogic
                 , previousLastId: lastId
                 , previousLastRiskNo: lastRiskNo
+                , displayType: this.listType
             });
             ret = ret.concat(result.data);
             lastId = result.lastId;
@@ -681,10 +648,12 @@ export default class Dam_BulkApproval extends LightningElement {
             this.pageInfo.pageNumber = this.pageInfo.lastPageNumber;
         }
         this.pageInfo.rowNumberOffset = (this.pageInfo.pageNumber - 1) * this.pageInfo.pageSize;
+        //console.log('pageInfo=' + JSON.stringify(this.pageInfo));
 
         const startIndex = this.pageInfo.rowNumberOffset;
         const endIndex = this.pageInfo.pageNumber * this.pageInfo.pageSize;
         const detailParPage = detailRaw.slice(startIndex, endIndex);
+        //console.log('detailParPage=' + JSON.stringify(detailParPage));
 
         return detailParPage;
     }
@@ -753,6 +722,7 @@ export default class Dam_BulkApproval extends LightningElement {
                 cell.rowspan = rowspan;
             });
         }
+        //console.log('detail=' + JSON.stringify(detail));
 
         return detail;
     }
@@ -1032,45 +1002,12 @@ export default class Dam_BulkApproval extends LightningElement {
         return ret;
     }
 
-    handleOpenCommentApprovalDialog(event) {
-        const dialog = this.template.querySelector('[data-name="display-comment-dialog"]');
-        dialog.classList.remove('slds-hide');
-        dialog.classList.add('slds-fade-in-open');
-        const backdrop = this.template.querySelector('[data-name="dialog-backdrop"]');
-        backdrop.classList.add('slds-backdrop_open');
-        this.checklist_count = this.template.querySelectorAll('input[name="approval-checkboxes"]:checked').length;
-        this.actionProcess = event.target.name;
-        this.isApproveActionProcess = (this.actionProcess == 'Approve') ? true : false;
-    }
-
-    handleCloseCommentApprovalDialog() {
-        const dialog = this.template.querySelector('[data-name="display-comment-dialog"]');
+    handleCloseConfirmApprovalDialog() {
+        const dialog = this.template.querySelector('[data-name="display-submit-confirm-dialog"]');
         dialog.classList.add('slds-hide');
         dialog.classList.remove('slds-fade-in-open');
         const backdrop = this.template.querySelector('[data-name="dialog-backdrop"]');
         backdrop.classList.remove('slds-backdrop_open');
-    }
-
-    handleOpenSubmitApprovalDialog() {
-        this.handleCloseCommentApprovalDialog();
-        const dialog = this.template.querySelector('[data-name="display-submit-approval-dialog"]');
-        dialog.classList.remove('slds-hide');
-        dialog.classList.add('slds-fade-in-open');
-        const backdrop = this.template.querySelector('[data-name="dialog-backdrop"]');
-        backdrop.classList.add('slds-backdrop_open');
-    }
-
-    handleCloseSubmitApprovalDialog() {
-        const dialog = this.template.querySelector('[data-name="display-submit-approval-dialog"]');
-        dialog.classList.add('slds-hide');
-        dialog.classList.remove('slds-fade-in-open');
-        const backdrop = this.template.querySelector('[data-name="dialog-backdrop"]');
-        backdrop.classList.remove('slds-backdrop_open');
-    }
-
-    handleSubmitApprovalDialog() {
-        this.multiApprovalProcess();
-        this.handleCloseSubmitApprovalDialog();
     }
 
     //Approval DAM-ERMT-21
@@ -1104,49 +1041,5 @@ export default class Dam_BulkApproval extends LightningElement {
             childBoxes[ i ].checked = false;
         }
         this.hasCheckedRow = false;
-    }
-
-    handleCommentChange(event) {
-        this.comment = event.detail.value;
-    }
-
-    async multiApprovalProcess() {
-        this.isProcessing = true;
-        try {
-            const listRiskId = [];
-            var checkedBoxes = this.template.querySelectorAll('input[name="approval-checkboxes"]:checked');
-            for (var i = 0; i < checkedBoxes.length; i++) {
-                listRiskId.push(checkedBoxes[ i ].value);
-            }
-
-            await multiApprovalProcess({
-                action: this.actionProcess
-                , comment: this.comment
-                , riskIds: listRiskId
-                , approvalAssignId: this.recordId
-            });
-
-            // clear state data
-            this.comment = null;
-            this.handleClearAllCheckbox();
-
-            // reload table data
-            await this.loadRisklist();
-
-            // refreshApex RecordPage
-            eval("$A.get('e.force:refreshView').fire();");
-
-            // Toast message
-            const evt = new ShowToastEvent({
-                title: this.isApproveActionProcess ? this.label.label_approveSuccess : this.label.label_rejectSuccess
-                , message: ''
-                , variant: 'success'
-            });
-            this.dispatchEvent(evt);
-
-        } catch ( error ){
-            this.errorMessages = getErrorMessages(error.body.message);
-        }
-        this.isProcessing = false;
     }
 }

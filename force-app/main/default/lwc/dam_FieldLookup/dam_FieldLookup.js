@@ -22,6 +22,7 @@ export default class Dam_FieldLookup extends LightningElement {
     _objectName = null;
     @api value = null; // 値（項目名）
     @api selectFieldNames = null; // 選択項目名リスト
+    oldSelectFieldNames = null;
     @api maxLevel = 2; // 検索親オブジェクト項目の最大階層
     @api isQuery = false; // クエリ用か
     @track fieldLabel = null; // 項目ラベル
@@ -81,12 +82,10 @@ export default class Dam_FieldLookup extends LightningElement {
     loadFieldSels(fieldLabel) {
         if (this.fieldSelsLoading) return;
 
-        if (this.fieldSels) {
-            // 絞込み項目リストの作成
+        if(this.oldSelectFieldNames && JSON.stringify(this.oldSelectFieldNames) === JSON.stringify(this.selectFieldNames)){
             this.filterFieldSels = this.createFilterFieldSels(fieldLabel);
         } else {
             this.fieldSelsLoading = true;
-
             // 項目選択リストの取得
             getFieldSels({
                 objectName: this.objectName
@@ -95,10 +94,10 @@ export default class Dam_FieldLookup extends LightningElement {
                 , isQuery: this.isQuery
             }).then(data => {
                 this.fieldSels = data;
-
                 // 絞込み項目リストの作成
                 this.filterFieldSels = this.createFilterFieldSels(fieldLabel);
                 this.fieldSelsLoading = false;
+                this.oldSelectFieldNames = this.selectFieldNames;
             }).catch(error => {
                 // 項目選択リストの初期化
                 this.initFieldSels();
