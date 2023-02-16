@@ -59,7 +59,7 @@ import getRisklistDisplayFieldName from '@salesforce/apex/DAM_ProjectRisklistCtl
 import getRiskFieldDescByName from '@salesforce/apex/DAM_ProjectRisklistCtlr.getRiskFieldDescByName';
 import getControlFieldDescByName from '@salesforce/apex/DAM_ProjectRisklistCtlr.getControlFieldDescByName';
 import getRisks from '@salesforce/apex/DAM_BulkApproval.getRisks';
-import getControlsByRiskId from '@salesforce/apex/DAM_ProjectRisklistCtlr.getControlsByRiskId';
+import getControlsByRiskId from '@salesforce/apex/DAM_BulkApproval.getControlsByRiskId';
 import getApprovalAssignById from '@salesforce/apex/DAM_BulkApproval.getApprovalAssignById';
 import multiApprovalProcess from '@salesforce/apex/DAM_BulkApproval.multiApprovalProcess';
 
@@ -96,7 +96,7 @@ export default class Dam_BulkApproval extends LightningElement {
             , action_title: this.label.label_approvalTitle
             , success_title: this.label.label_approveSuccess
         },
-         reject: {
+        reject: {
             action: this.label.label_reject
             , action_title: this.label.label_rejectTitle
             , success_title: this.label.label_rejectSuccess
@@ -123,6 +123,8 @@ export default class Dam_BulkApproval extends LightningElement {
     actionProcess = '';
     isApproveActionProcess;
     approvalAssignInfo;
+    risksData = [];
+    controlsByRiskIdData = [];
 
     // ページ情報
     @track pageInfo = {
@@ -407,21 +409,22 @@ export default class Dam_BulkApproval extends LightningElement {
         });
 
         // リスクリストの取得
-        const risks = await this.getRisks({
+        this.risksData = await this.getRisks({
             approvalAssignId: this.recordId
             , approvalAssignProjectId: this.approvalAssignInfo.Project__c
             , approvalAssignOrgId: this.approvalAssignInfo.Organization__c
             , dispFieldNames: this.displayFieldName.risk
-            , searchConds: null
-            , searchCondLogic: null
         });
 
+        let riskIds = this.risksData.map(risk => {
+            return risk.Id;
+        })
+
         // 対応策リストマップの取得
-        const controlsByRiskId = await this.getControlsByRiskId({
-            projectId: this.approvalAssignInfo.Project__c
-            , dispFieldNames: this.displayFieldName.control
-            , searchConds: null
-            , searchCondLogic: null
+        //const controlsByRiskId
+        this.controlsByRiskIdData = await this.getControlsByRiskId({
+            dispFieldNames: this.displayFieldName.control
+            , riskIds: riskIds
         });
 
         // リスク一覧のヘッダの作成
@@ -481,126 +484,114 @@ export default class Dam_BulkApproval extends LightningElement {
         // リスク一覧の明細の作成
         const detailRaw = [];
         row = -1;
-        risks.forEach(risk => {
+        this.risksData.forEach(risk => {
             const riskId = risk.Id;
-            const controls = controlsByRiskId[ riskId ];
+            const controls = this.controlsByRiskIdData[ riskId ];
 
-            // 対象の取得
-            let isTarget = true;
-            if (!controls || controls.length === 0) {
-                isTarget = false;
+            // リスク関連最大数の取得
+            let relationMax = 1;
+            if (controls) {
+                relationMax = (relationMax < controls.length ? controls.length : relationMax);
             }
 
-            if (isTarget) {
-                // リスク関連最大数の取得
-                let relationMax = 1;
-                if (controls) {
-                    relationMax = (relationMax < controls.length ? controls.length : relationMax);
+            // 明細の作成
+            // リスク
+            const riskItems = [];
+            riskItems.push({
+                isCheckboxCol: true
+                , riskId: riskId
+                , objectName: RISK_OBJECT.objectApiName
+                , type: null
+            })
+            this.displayFieldName.risk.forEach(fieldName => {
+                const fieldDesc = riskFieldDescByName[ fieldName ];
+                if (fieldDesc) {
+                    let name = fieldName;
+                    const value = undefineToNull(risk[ name ]);
+                    name = fieldName + '_Label';
+                    const label = undefineToNull(risk[ name ]);
+                    let isIncidentLinksField = (fieldName === 'ermt__Incident_Links__c') ? true : false;
+                    riskItems.push(this.createDetailItem({
+                        value: value
+                        , label: label
+                        , type: fieldDesc.type
+                        , recordTypeId: risk[ 'RecordTypeId' ]
+                        , isIncidentLinksField: isIncidentLinksField
+                        , objectName: RISK_OBJECT.objectApiName
+                        , fieldName: fieldName
+                        , riskId: riskId
+                    }));
                 }
+            });
 
-                // 明細の作成
+            for (let i = 0; i < relationMax; i++) {
+                const rec = [];
+                row++;
+                col = -1;
+
                 // リスク
-                const riskItems = [];
-                riskItems.push({
-                    isCheckboxCol: true
-                    , riskId: riskId
-                    , objectName: RISK_OBJECT.objectApiName
-                    , type: null
-                })
-                this.displayFieldName.risk.forEach(fieldName => {
-                    const fieldDesc = riskFieldDescByName[ fieldName ];
-                    if (fieldDesc) {
-                        let name = fieldName;
-                        const value = undefineToNull(risk[ name ]);
-                        name = fieldName + '_Label';
-                        const label = undefineToNull(risk[ name ]);
-                        let isIncidentLinksField = (fieldName === 'ermt__Incident_Links__c') ? true : false;
-                        riskItems.push(this.createDetailItem({
-                            value: value
-                            , label: label
-                            , type: fieldDesc.type
-                            , recordTypeId: risk[ 'RecordTypeId' ]
-                            , isIncidentLinksField: isIncidentLinksField
-                            , objectName: RISK_OBJECT.objectApiName
-                            , fieldName: fieldName
-                            , riskId: riskId
-                        }));
-                    }
+                riskItems.forEach((item, index) => {
+                    col++;
+                    rec.push({
+                        row: row
+                        , col: col
+                        , colWidthStyle: this.getDefaultColumnWidthStyle(item.type)
+                        , rowspan: (index === 0) ? relationMax : 1
+                        , item: item
+                    });
                 });
 
-                for (let i = 0; i < relationMax; i++) {
-                    const rec = [];
-                    row++;
-                    col = -1;
-
-                    // リスク
-                    riskItems.forEach((item, index) => {
+                // 対応策
+                let control = null;
+                if (controls && i < controls.length) {
+                    control = controls[ i ];
+                }
+                this.displayFieldName.control.forEach(fieldName => {
+                    const fieldDesc = controlFieldDescByName[ fieldName ];
+                    if (fieldDesc) {
+                        let value = null;
+                        let label = null;
+                        let type = null;
+                        if (control) {
+                            if (fieldName === 'Name') {
+                                value = undefineToNull(control.Id);
+                                label = undefineToNull(control[ fieldName ]);
+                                type = TYPE_REFERENCE;
+                            } else if (fieldName === 'Total_Of_Risk_Control_Junctions__c') {
+                                value = undefineToNull(control[ fieldName ]) >= 2 ? true : null;
+                                label = value;
+                                type = TYPE_BOOLEAN;
+                            } else {
+                                let name = fieldName;
+                                value = undefineToNull(control[ name ]);
+                                name = fieldName + '_Label';
+                                label = undefineToNull(control[ name ]);
+                                type = fieldDesc.type;
+                            }
+                        } else {
+                            if (fieldName === 'Name') {
+                                type = TYPE_REFERENCE;
+                            }
+                        }
                         col++;
                         rec.push({
                             row: row
                             , col: col
-                            , colWidthStyle: this.getDefaultColumnWidthStyle(item.type)
-                            , rowspan: (index === 0) ? relationMax : 1
-                            , item: item
+                            , colWidthStyle: this.getDefaultColumnWidthStyle(type)
+                            , rowspan: 1
+                            , item: this.createDetailItem({
+                                value: value
+                                , label: label
+                                , type: type
+                                , recordTypeId: null
+                                , objectName: CONTROL_OBJECT.objectApiName
+                                , fieldName: fieldName
+                                , riskId: riskId
+                            })
                         });
-                    });
-
-                    // 対応策
-                    let control = null;
-                    if (controls && i < controls.length) {
-                        control = controls[ i ];
-                        const riskControlJuncs = control.RiskControlJuncs;
                     }
-                    this.displayFieldName.control.forEach(fieldName => {
-                        const fieldDesc = controlFieldDescByName[ fieldName ];
-                        if (fieldDesc) {
-                            let value = null;
-                            let label = null;
-                            let type = null;
-                            let riskControlId = null;
-                            if (control) {
-                                if (fieldName === 'Name') {
-                                    value = undefineToNull(control.Id);
-                                    label = undefineToNull(control[ fieldName ]);
-                                    type = TYPE_REFERENCE;
-                                    riskControlId = control.riskControlId;
-                                } else if (fieldName === 'Total_Of_Risk_Control_Junctions__c') {
-                                    value = undefineToNull(control[ fieldName ]) >= 2 ? true : null;
-                                    label = value;
-                                    type = TYPE_BOOLEAN;
-                                } else {
-                                    let name = fieldName;
-                                    value = undefineToNull(control[ name ]);
-                                    name = fieldName + '_Label';
-                                    label = undefineToNull(control[ name ]);
-                                    type = fieldDesc.type;
-                                }
-                            } else {
-                                if (fieldName === 'Name') {
-                                    type = TYPE_REFERENCE;
-                                }
-                            }
-                            col++;
-                            rec.push({
-                                row: row
-                                , col: col
-                                , colWidthStyle: this.getDefaultColumnWidthStyle(type)
-                                , rowspan: 1
-                                , item: this.createDetailItem({
-                                    value: value
-                                    , label: label
-                                    , type: type
-                                    , recordTypeId: null
-                                    , objectName: CONTROL_OBJECT.objectApiName
-                                    , fieldName: fieldName
-                                    , riskId: riskId
-                                    , riskControlId: riskControlId
-                                })
-                            });
-                        }
-                    });
-                    detailRaw.push(rec);
-                }
+                });
+                detailRaw.push(rec);
             }
         });
 
@@ -629,8 +620,6 @@ export default class Dam_BulkApproval extends LightningElement {
                 , approvalAssignProjectId: param.approvalAssignProjectId
                 , approvalAssignOrgId: param.approvalAssignOrgId
                 , dispFieldNames: param.dispFieldNames
-                , searchConds: param.searchConds
-                , searchCondLogic: param.searchCondLogic
                 , previousLastId: lastId
                 , previousLastRiskNo: lastRiskNo
             });
@@ -650,10 +639,8 @@ export default class Dam_BulkApproval extends LightningElement {
         do {
             // 対応策リストマップの取得
             result = await getControlsByRiskId({
-                projectId: param.projectId
-                , dispFieldNames: param.dispFieldNames
-                , searchConds: param.searchConds
-                , searchCondLogic: param.searchCondLogic
+                dispFieldNames: param.dispFieldNames
+                , riskIds: param.riskIds
                 , previousLastId: lastId
                 , previousLastName: lastName
             });
@@ -810,9 +797,6 @@ export default class Dam_BulkApproval extends LightningElement {
             , riskId: data.riskId
             , recordTypeId: data.recordTypeIdG
         };
-        if ('riskControlId' in data) {
-            item.riskControlId = data.riskControlId;
-        }
         if ('isIncidentLinksField' in data) {
             item.isIncidentLinksField = data.isIncidentLinksField;
         }
@@ -1114,9 +1098,18 @@ export default class Dam_BulkApproval extends LightningElement {
         this.isProcessing = true;
         try {
             const listRiskId = [];
+            const dataAtTheTimeOfApplyApproval = {};
             var checkedBoxes = this.template.querySelectorAll('input[name="approval-checkboxes"]:checked');
             for (var i = 0; i < checkedBoxes.length; i++) {
-                listRiskId.push(checkedBoxes[ i ].value);
+                let riskId = checkedBoxes[ i ].value;
+
+                // mapping data at the time of apply approval
+                listRiskId.push(riskId);
+                let risk = this.risksData.find(elm => {
+                    return elm.Id == riskId;
+                });
+                risk[ 'controls' ] = this.controlsByRiskIdData[ riskId ];
+                dataAtTheTimeOfApplyApproval[ risk.ApprovalAssignRiskJuncs[ 0 ].Id ] = JSON.stringify(risk);
             }
 
             await multiApprovalProcess({
@@ -1124,6 +1117,7 @@ export default class Dam_BulkApproval extends LightningElement {
                 , comment: this.comment
                 , riskIds: listRiskId
                 , approvalAssignId: this.recordId
+                , dataAtTheTimeOfApplyApproval: dataAtTheTimeOfApplyApproval
             });
 
             // clear state data
@@ -1144,7 +1138,7 @@ export default class Dam_BulkApproval extends LightningElement {
             });
             this.dispatchEvent(evt);
 
-        } catch ( error ){
+        } catch (error) {
             this.errorMessages = getErrorMessages(error.body.message);
         }
         this.isProcessing = false;

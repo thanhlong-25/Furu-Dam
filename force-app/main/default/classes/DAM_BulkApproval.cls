@@ -22,29 +22,17 @@ public with sharing class DAM_BulkApproval {
         , Id approvalAssignProjectId // プロジェクトID
         , Id approvalAssignOrgId
         , List<String> dispFieldNames // リスク項目名リスト
-        , List<Map<String, Object>> searchConds // 検索条件リスト
-        , String searchCondLogic // 検索条件ロジック
         , Id previousLastId // 前の最終ID
         , Decimal previousLastRiskNo // 前の最終名
     ) {
-        // 検索条件式の作成
-        String searchCondExp = null;
-        if (searchConds != null && !searchConds.isEmpty()) {
-            searchCondExp = DAM_RecordSearchConditionCtlr.createSearchConditionExpression(
-                'ermt__Risk__c'
-                , searchConds
-                , searchCondLogic
-            );
-            if (String.isNotEmpty(searchCondExp)) {
-                searchCondExp = ' AND (' + searchCondExp + ')';
-            }
-        }
 
         // リスクの取得
         Map<String, String> fieldNameMap = new Map<String, String>();
         SObjectType riskSObjType = ermt__Risk__c.getSObjectType();
         String query = '';
-        query += 'SELECT Id, Name, Risk_No__c, RecordType.DeveloperName, RecordTypeId, (SELECT Id, Status FROM ProcessInstances WHERE Status = \'Pending\' LIMIT 1)';
+        query += 'SELECT Id, Name, Risk_No__c, RecordType.DeveloperName, RecordTypeId, ';
+        //query += '(SELECT Id, Status FROM ProcessInstances WHERE Status = \'Pending\' LIMIT 1), ';
+        query += '(SELECT Id From ApprovalAssign_Risk_Juncs__r WHERE ApprovalAssign__c =: approvalAssignId)';
         fieldNameMap.put('Id', 'Id');
         fieldNameMap.put('Name', 'Name');
         fieldNameMap.put('RecordType.DeveloperName', 'RecordType.DeveloperName');
@@ -88,9 +76,6 @@ public with sharing class DAM_BulkApproval {
             query += ' AND (Risk_No__c > :previousLastRiskNo';
             query += ' OR (Risk_No__c = :previousLastRiskNo AND Id > :previousLastId))';
         }
-        if (String.isNotEmpty(searchCondExp)) {
-            query += searchCondExp;
-        }
         query += ' ORDER BY Risk_No__c, Id';
         query += ' LIMIT :QUERY_LIMIT';
         List<Map<String, Object>> data = new List<Map<String, Object>>();
@@ -99,6 +84,7 @@ public with sharing class DAM_BulkApproval {
         Integer cnt = 0;
         for (ermt__Risk__c r : Database.query(query)) {
             Map<String, Object> rec = new Map<String, Object>();
+            rec.put('ApprovalAssignRiskJuncs', r.ApprovalAssign_Risk_Juncs__r);
             for (String fieldName : fieldNameMap.keySet()) {
                 String name = fieldNameMap.get(fieldName);
                 Object value = DAM_CommonUtil.getFieldValue(r, fieldName);
@@ -118,8 +104,113 @@ public with sharing class DAM_BulkApproval {
         };
     }
 
+    // 対応策リストマップの取得
     @AuraEnabled
-    public static void multiApprovalProcess(String action, String comment, List<String> riskIds, String approvalAssignId){
+    public static Map<String, Object> getControlsByRiskId(
+        List<String> dispFieldNames // 表示項目名リスト
+        , List<String> riskIds
+        , Id previousLastId // 前の最終ID
+        , String previousLastName // 前の最終名
+    ) {
+        // リスク対応策の取得
+        String query = '';
+        query += 'SELECT Id, Name, ermt__Risk__c, ermt__Control__c';
+        query += ' FROM ermt__Risk_Control_Junc__c';
+        query += ' WHERE ermt__Risk__c IN :riskIds';
+        if (String.isNotEmpty(previousLastId) && String.isNotEmpty(previousLastName)) {
+            query += ' AND (Name > :previousLastName';
+            query += ' OR (Name = :previousLastName AND Id > :previousLastId))';
+        }
+        query += ' ORDER BY Name, Id';
+        query += ' LIMIT :QUERY_LIMIT';
+        Map<Id, List<ermt__Risk_Control_Junc__c>> riskCtlsByControlId = new Map<Id, List<ermt__Risk_Control_Junc__c>>();
+        Set<Id> controlIdSet = new Set<Id>();
+        Id lastId = null;
+        String lastName = null;
+        Integer cnt = 0;
+        for (ermt__Risk_Control_Junc__c rcj : Database.query(query)) {
+            List<ermt__Risk_Control_Junc__c> riskCtls = riskCtlsByControlId.get(rcj.ermt__Control__c);
+            if (riskCtls == null) {
+                riskCtls = new List<ermt__Risk_Control_Junc__c>();
+                riskCtlsByControlId.put(rcj.ermt__Control__c, riskCtls);
+            }
+            riskCtls.add(rcj);
+            controlIdSet.add(rcj.ermt__Control__c);
+            lastId = rcj.Id;
+            lastName = rcj.Name;
+            cnt++;
+        }
+        Boolean isContinue = (cnt >= QUERY_LIMIT);
+
+        // 対応策の取得
+        Map<String, String> fieldNameMap = new Map<String, String>();
+        SObjectType sObjType = ermt__Control__c.getSObjectType();
+        query = '';
+        query += 'SELECT Id';
+        fieldNameMap.put('Id', 'Id');
+        for (String fieldName : dispFieldNames) {
+            if (fieldName == 'Id') {
+            } else {
+                DescribeFieldResult fieldDesc = DAM_CommonUtil.getFieldDescribe(sObjType, fieldName);
+                if (fieldDesc.isAccessible()) {
+                    String type = String.valueOf(fieldDesc.getType());
+                    query += ', ' + fieldName;
+                    fieldNameMap.put(fieldName, fieldName);
+                    if (
+                        type == String.valueOf(Schema.DisplayType.PICKLIST) ||
+                        type == String.valueOf(Schema.DisplayType.MULTIPICKLIST)
+                    ) {
+                        query += ', toLabel(' + fieldName + ') ' + fieldName + '_Label';
+                        fieldNameMap.put(fieldName + '_Label', fieldName + '_Label');
+                    } else if (
+                        type == String.valueOf(Schema.DisplayType.REFERENCE)
+                    ) {
+                        String fieldName2 = fieldDesc.getRelationshipName() + '.Name';
+                        DescribeFieldResult fieldDesc2 = DAM_CommonUtil.getFieldDescribe(sObjType, fieldName2);
+                        if (fieldDesc2 != null && fieldDesc2.isAccessible()) {
+                            query += ', ' + fieldName2;
+                            fieldNameMap.put(fieldName2, fieldName + '_Label');
+                        }
+                    }
+                }
+            }
+        }
+        query += ' FROM ermt__Control__c';
+        query += ' WHERE Id IN :controlIdSet';
+        query += ' ORDER BY Name';
+        Map<Id, List<Map<String, Object>>> data = new Map<Id, List<Map<String, Object>>>();
+        for (ermt__Control__c c : Database.query(query)) {
+            Id controlId = c.Id;
+            Map<String, Object> rec = new Map<String, Object>();
+            for (String fieldName : fieldNameMap.keySet()) {
+                String name = fieldNameMap.get(fieldName);
+                Object value = DAM_CommonUtil.getFieldValue(c, fieldName);
+                rec.put(name, value);
+            }
+            List<ermt__Risk_Control_Junc__c> riskCtls = riskCtlsByControlId.get(controlId);
+            if (riskCtls != null) {
+                for (ermt__Risk_Control_Junc__c riskCtl : riskCtls) {
+                    Map<String, Object> rec2 = rec.clone();
+                    rec2.put('riskControlId', riskCtl.Id);
+                    List<Map<String, Object>> recs = data.get(riskCtl.ermt__Risk__c);
+                    if (recs == null) {
+                        recs = new List<Map<String, Object>>();
+                        data.put(riskCtl.ermt__Risk__c, recs);
+                    }
+                    recs.add(rec2);
+                }
+            }
+        }
+        return new Map<String, Object>{
+            'data' => data
+            , 'lastId' => lastId
+            , 'lastName' => lastName
+            , 'isContinue' => isContinue
+        };
+    }
+
+    @AuraEnabled
+    public static void multiApprovalProcess(String action, String comment, List<String> riskIds, String approvalAssignId, Map<String, String> dataAtTheTimeOfApplyApproval){
         if(String.isBlank(action)) return;
         if(String.isBlank(approvalAssignId)) return;
         Savepoint sp = Database.setSavepoint();
@@ -131,7 +222,8 @@ public with sharing class DAM_BulkApproval {
                                                     AND ApprovalAssign__c =: approvalAssignId
                                                 ])
             {
-                arj.Approval_Status__c = action     == 'Approve' ? APPROVE : REJECT;
+                arj.Approval_Status__c = (action == 'Approve') ? APPROVE : REJECT;
+                arj.DataAtTheTimeOfApproval__c = dataAtTheTimeOfApplyApproval.get(arj.Id);
                 arjs.add(arj);
             }
             update arjs;

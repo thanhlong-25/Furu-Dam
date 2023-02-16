@@ -37,6 +37,7 @@ private class DAM_BulkApprovalTest {
             ermt__Risk__c rsk = DAM_TestDataFactory.createRisk(i, accs[0]);
             rsk.ermt__Project__c = prjs[0].Id;
             rsk.ermt__Organization__c = accs[0].Id;
+            rsk.Risk_No__c = i;
             rsks.add(rsk);
         }
         insert rsks;
@@ -121,7 +122,12 @@ private class DAM_BulkApprovalTest {
         List<ApprovalAssign_Risk_Junc__c> arjsBefore = [SELECT ID, Approval_Status__c FROM ApprovalAssign_Risk_Junc__c WHERE ApprovalAssign__c =: approvalAssigns[0].Id];
         System.assertEquals(DAM_BulkApproval.PENDING, arjsBefore[0].Approval_Status__c);
 
-        DAM_BulkApproval.multiApprovalProcess('Approve', 'Comment', new List<String>{risks[0].Id}, approvalAssigns[0].Id);
+        DAM_BulkApproval.multiApprovalProcess(
+            'Approve',
+            'Comment',
+            new List<String>{risks[0].Id}, approvalAssigns[0].Id,
+            new Map<String, String>()
+        );
 
         // After Run Process
         List<ProcessInstance> proInsAfter = [SELECT ID, Status, TargetObjectId FROM ProcessInstance WHERE TargetObjectId =: risks[0].Id];
@@ -144,7 +150,12 @@ private class DAM_BulkApprovalTest {
         List<ApprovalAssign_Risk_Junc__c> arjsBefore = [SELECT ID, Approval_Status__c FROM ApprovalAssign_Risk_Junc__c WHERE ApprovalAssign__c =: approvalAssigns[0].Id];
         System.assertEquals(DAM_BulkApproval.PENDING, arjsBefore[0].Approval_Status__c);
 
-        DAM_BulkApproval.multiApprovalProcess('Reject', 'Comment', new List<String>{risks[0].Id}, approvalAssigns[0].Id);
+        DAM_BulkApproval.multiApprovalProcess(
+            'Reject',
+            'Comment',
+            new List<String>{risks[0].Id}, approvalAssigns[0].Id,
+            new Map<String, String>()
+        );
 
         // After Run Process
         List<ProcessInstance> proInsAfter = [SELECT ID, Status, TargetObjectId FROM ProcessInstance WHERE TargetObjectId =: risks[0].Id];
@@ -168,7 +179,12 @@ private class DAM_BulkApprovalTest {
         List<ApprovalAssign_Risk_Junc__c> arjsBefore = [SELECT ID, Approval_Status__c FROM ApprovalAssign_Risk_Junc__c WHERE ApprovalAssign__c =: approvalAssigns[0].Id];
         System.assertEquals(DAM_BulkApproval.PENDING, arjsBefore[0].Approval_Status__c);
 
-        DAM_BulkApproval.multiApprovalProcess(null, 'Comment', new List<String>{risks[0].Id}, approvalAssigns[0].Id);
+        DAM_BulkApproval.multiApprovalProcess(
+            null,
+            'Comment',
+            new List<String>{risks[0].Id}, approvalAssigns[0].Id,
+            new Map<String, String>()
+        );
 
         // After Run Process
         List<ProcessInstance> proInsAfter = [SELECT ID, Status, TargetObjectId FROM ProcessInstance WHERE TargetObjectId =: risks[0].Id];
@@ -192,7 +208,13 @@ private class DAM_BulkApprovalTest {
         List<ApprovalAssign_Risk_Junc__c> arjsBefore = [SELECT ID, Approval_Status__c FROM ApprovalAssign_Risk_Junc__c WHERE ApprovalAssign__c =: approvalAssigns[0].Id];
         System.assertEquals(DAM_BulkApproval.PENDING, arjsBefore[0].Approval_Status__c);
 
-        DAM_BulkApproval.multiApprovalProcess('Approve', null, new List<String>{risks[0].Id}, approvalAssigns[0].Id);
+        DAM_BulkApproval.multiApprovalProcess(
+            'Approve',
+            null,
+            new List<String>{risks[0].Id},
+            approvalAssigns[0].Id,
+            new Map<String, String>()
+        );
 
         // After Run Process
         List<ProcessInstance> proInsAfter = [SELECT ID, Status, TargetObjectId FROM ProcessInstance WHERE TargetObjectId =: risks[0].Id];
@@ -214,7 +236,13 @@ private class DAM_BulkApprovalTest {
         List<ProcessInstance> proInsBefore = [SELECT ID, Status, TargetObjectId FROM ProcessInstance WHERE Status = 'Pending'];
         System.assertEquals(3, proInsBefore.size());
 
-        DAM_BulkApproval.multiApprovalProcess('Approve', 'Comment', new List<String>(), approvalAssigns[0].Id);
+        DAM_BulkApproval.multiApprovalProcess(
+            'Approve',
+            'Comment',
+            new List<String>(),
+            approvalAssigns[0].Id,
+            new Map<String, String>()
+        );
 
         // After Run Process
         List<ProcessInstance> proInsAfter = [SELECT ID, Status, TargetObjectId FROM ProcessInstance WHERE Status = 'Pending'];
@@ -234,13 +262,19 @@ private class DAM_BulkApprovalTest {
         List<ProcessInstance> proInsBefore = [SELECT ID, Status, TargetObjectId FROM ProcessInstance WHERE Status = 'Pending'];
         System.assertEquals(3, proInsBefore.size());
 
-        DAM_BulkApproval.multiApprovalProcess('Approve', 'Comment', new List<String>{risks[0].Id}, '');
+        DAM_BulkApproval.multiApprovalProcess(
+            'Approve',
+            'Comment',
+            new List<String>{risks[0].Id},
+            '',
+            new Map<String, String>()
+        );
 
         // After Run Process
         List<ProcessInstance> proInsAfter = [SELECT ID, Status, TargetObjectId FROM ProcessInstance WHERE Status = 'Pending'];
         System.assertEquals(3, proInsBefore.size());
     }
-
+    
     // @Method: DAM_BulkApproval.getRisks()
     // @Case: Happy case
     @IsTest static void getRisksTest_1() {
@@ -256,19 +290,6 @@ private class DAM_BulkApprovalTest {
             List<String> dispFieldNames = new List<String>{
                 'Name'
             };
-            // 検索条件リスト
-            List<Map<String, Object>> searchConds = new List<Map<String, Object>>{
-                new Map<String, Object>{
-                    'no' => 1
-                    , 'fieldName' => 'Id'
-                    , 'operator' => DAM_FieldOperatorSelectCtlr.OPERATOR_VALUE_EQUAL
-                    , 'value' => ''
-                    , 'errMsg' => ''
-                }
-            };
-
-            // 検索条件ロジック
-            String searchCondLogic = '(NOT 1)';
 
             // リスクリストの取得
             Map<String, Object> result = DAM_BulkApproval.getRisks(
@@ -276,8 +297,6 @@ private class DAM_BulkApprovalTest {
                 , projects[0].Id
                 , accounts[0].Id
                 , dispFieldNames
-                , searchConds
-                , searchCondLogic
                 , null
                 , null
             );
@@ -303,11 +322,6 @@ private class DAM_BulkApprovalTest {
             List<String> dispFieldNames = new List<String>{
                 'Name', 'ermt__Organization__c', 'ermt__AssessmentStatus__c'
             };
-            // 検索条件リスト
-            List<Map<String, Object>> searchConds = new List<Map<String, Object>>();
-
-            // 検索条件ロジック
-            String searchCondLogic = '';
 
             // リスクリストの取得
             Map<String, Object> result = DAM_BulkApproval.getRisks(
@@ -315,8 +329,58 @@ private class DAM_BulkApprovalTest {
                 , projects[0].Id
                 , accounts[0].Id
                 , dispFieldNames
-                , searchConds
-                , searchCondLogic
+                , null
+                , null
+            );
+
+            // 検証
+            System.assert(!result.isEmpty());
+        }
+    }
+
+    // @Method: DAM_BulkApproval.getControlsByRiskId()
+    // @Case: Happy case
+    @isTest static void getControlsByRiskIdTest_1() {
+        // データ作成
+        Map<String, Object> data = initData();
+        List<User> usrs = (List<User>)data.get('User');
+        List<ermt__Risk__c> risks = (List<ermt__Risk__c>)data.get('ermt__Risk__c');
+        System.runAs(usrs[0]) {
+            // 表示項目リスト
+            List<String> dispFieldNames = new List<String>{
+                'Name', 'ermt__AssignedOrg__c', 'ermt__ExecutionFrequency__c'
+            };
+
+            // リスクリストの取得
+            Map<String, Object> result = DAM_BulkApproval.getControlsByRiskId(
+                dispFieldNames
+                , new List<String> {risks[0].Id }
+                , null
+                , null
+            );
+
+            // 検証
+            System.assert(!result.isEmpty());
+        }
+    }
+
+    // @Method: DAM_BulkApproval.getControlsByRiskId()
+    // @Case: Happy case but none data
+    @isTest static void getControlsByRiskIdTest_2() {
+        // データ作成
+        Map<String, Object> data = initData();
+        List<User> usrs = (List<User>)data.get('User');
+        List<ermt__Risk__c> risks = (List<ermt__Risk__c>)data.get('ermt__Risk__c');
+        System.runAs(usrs[0]) {
+            // 表示項目リスト
+            List<String> dispFieldNames = new List<String>{
+                'Name'
+            };
+
+            // リスクリストの取得
+            Map<String, Object> result = DAM_BulkApproval.getControlsByRiskId(
+                dispFieldNames
+                , new List<String>{ risks[1].Id }
                 , null
                 , null
             );

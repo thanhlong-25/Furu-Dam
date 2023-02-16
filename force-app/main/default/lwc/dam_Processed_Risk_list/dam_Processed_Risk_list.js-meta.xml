@@ -8,7 +8,7 @@
     </targets>
     <targetConfigs>
         <targetConfig targets="lightning__RecordPage">
-        <property label="Type" name="listType" default="Approve" type="String" datasource="Approved, Rejected" required="true"/>
+        <property label="Type" name="displayType" default="Approved" type="String" datasource="Approved, Rejected" required="true"/>
             <objects>
                 <object>ApprovalAssign__c</object>
             </objects>

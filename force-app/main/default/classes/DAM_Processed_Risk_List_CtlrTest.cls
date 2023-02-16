@@ -64,7 +64,7 @@ private class DAM_Processed_Risk_List_CtlrTest {
 
         // リスク対応策
         List<ApprovalAssign__c> approvalAssigns = new List<ApprovalAssign__c>();
-        for (Integer i = 1; i < 2; i++) {
+        for (Integer i = 1; i <= 2; i++) {
             ApprovalAssign__c approvalAssign = new ApprovalAssign__c(
                 Applicant__c = usrs[0].Id,
                 Application_Comment__c = 'Comment ' + i,
@@ -77,42 +77,23 @@ private class DAM_Processed_Risk_List_CtlrTest {
         }
         insert approvalAssigns;
         ret.put('ApprovalAssign__c', approvalAssigns);
+
         return ret;
     }
 
     // @Method: DAM_Prosessed_Risk_List_Ctlr.getRisks()
     // @Case: Happy case.
-    @isTest static void getRisksTest_1() {
+    @isTest static void getApprovalAssignRiskDatat_1() {
         // データ作成
         Map<String, Object> data = initData();
         List<User> usrs = (List<User>)data.get('User');
-        List<Account> accounts = (List<Account>)data.get('Account');
         List<ermt__Risk__c> risks = (List<ermt__Risk__c>)data.get('ermt__Risk__c');
-        List<ermt__Project__c> projects = (List<ermt__Project__c>)data.get('ermt__Project__c');
         List<ApprovalAssign__c> approvalAssigns = (List<ApprovalAssign__c>)data.get('ApprovalAssign__c');
-        createApprovalRequest(risks, approvalAssigns);
+        createApprovalRequest(risks, approvalAssigns[0]);
         submitApprovalRequest(risks, 'Approve');
         System.runAs(usrs[0]) {
-            // 表示項目リスト
-            List<String> dispFieldNames = new List<String>{
-                'Name', 'ermt__Organization__c', 'ermt__AssessmentStatus__c'
-            };
-            // 検索条件リスト
-            List<Map<String, Object>> searchConds = new List<Map<String, Object>>();
-
-            // 検索条件ロジック
-            String searchCondLogic = '';
-
-            // リスクリストの取得
-            Map<String, Object> result = DAM_Processed_Risk_List_Ctlr.getRisks(
+            List<ApprovalAssign_Risk_Junc__c> result = DAM_Processed_Risk_List_Ctlr.getApprovalAssignRiskData(
                 approvalAssigns[0].Id
-                , projects[0].Id
-                , accounts[0].Id
-                , dispFieldNames
-                , searchConds
-                , searchCondLogic
-                , null
-                , null
                 , 'Approved'
             );
 
@@ -123,37 +104,19 @@ private class DAM_Processed_Risk_List_CtlrTest {
 
     // @Method: DAM_Prosessed_Risk_List_Ctlr.getRisks()
     // @Case: Happy case.
-    @isTest static void getRisksTest_2() {
+    @isTest static void getApprovalAssignRiskDatat_2() {
         // データ作成
         Map<String, Object> data = initData();
         List<User> usrs = (List<User>)data.get('User');
-        List<Account> accounts = (List<Account>)data.get('Account');
         List<ermt__Risk__c> risks = (List<ermt__Risk__c>)data.get('ermt__Risk__c');
-        List<ermt__Project__c> projects = (List<ermt__Project__c>)data.get('ermt__Project__c');
         List<ApprovalAssign__c> approvalAssigns = (List<ApprovalAssign__c>)data.get('ApprovalAssign__c');
-        createApprovalRequest(risks, approvalAssigns);
+        createApprovalRequest(risks, approvalAssigns[1]);
         submitApprovalRequest(risks, 'Reject');
         System.runAs(usrs[0]) {
-            // 表示項目リスト
-            List<String> dispFieldNames = new List<String>{
-                'Name', 'ermt__Organization__c', 'ermt__AssessmentStatus__c'
-            };
-            // 検索条件リスト
-            List<Map<String, Object>> searchConds = new List<Map<String, Object>>();
-
-            // 検索条件ロジック
-            String searchCondLogic = '';
 
             // リスクリストの取得
-            Map<String, Object> result = DAM_Processed_Risk_List_Ctlr.getRisks(
-                approvalAssigns[0].Id
-                , projects[0].Id
-                , accounts[0].Id
-                , dispFieldNames
-                , searchConds
-                , searchCondLogic
-                , null
-                , null
+            List<ApprovalAssign_Risk_Junc__c> result = DAM_Processed_Risk_List_Ctlr.getApprovalAssignRiskData(
+                approvalAssigns[1].Id
                 , 'Rejected'
             );
 
@@ -164,36 +127,17 @@ private class DAM_Processed_Risk_List_CtlrTest {
 
     // @Method: DAM_Prosessed_Risk_List_Ctlr.getRisks()
     // @Case: Happy case.
-    @isTest static void getRisksTest_3() {
+    @isTest static void getApprovalAssignRiskDatat_3() {
         // データ作成
         Map<String, Object> data = initData();
         List<User> usrs = (List<User>)data.get('User');
-        List<Account> accounts = (List<Account>)data.get('Account');
         List<ermt__Risk__c> risks = (List<ermt__Risk__c>)data.get('ermt__Risk__c');
-        List<ermt__Project__c> projects = (List<ermt__Project__c>)data.get('ermt__Project__c');
         List<ApprovalAssign__c> approvalAssigns = (List<ApprovalAssign__c>)data.get('ApprovalAssign__c');
-        createApprovalRequest(risks, approvalAssigns);
+        createApprovalRequest(risks, approvalAssigns[0]);
         System.runAs(usrs[0]) {
-            // 表示項目リスト
-            List<String> dispFieldNames = new List<String>{
-                'Name', 'ermt__Organization__c', 'ermt__AssessmentStatus__c'
-            };
-            // 検索条件リスト
-            List<Map<String, Object>> searchConds = new List<Map<String, Object>>();
-
-            // 検索条件ロジック
-            String searchCondLogic = '';
-
             // リスクリストの取得
-            Map<String, Object> result = DAM_Processed_Risk_List_Ctlr.getRisks(
+            List<ApprovalAssign_Risk_Junc__c> result = DAM_Processed_Risk_List_Ctlr.getApprovalAssignRiskData(
                 approvalAssigns[0].Id
-                , projects[0].Id
-                , accounts[0].Id
-                , dispFieldNames
-                , searchConds
-                , searchCondLogic
-                , null
-                , null
                 , 'Rejected'
             );
 
@@ -203,7 +147,7 @@ private class DAM_Processed_Risk_List_CtlrTest {
     }
 
     // @UTIL METHOD: Create approval request
-    static void createApprovalRequest(List<ermt__Risk__c> risks, List<ApprovalAssign__c> approvalAssigns){
+    static void createApprovalRequest(List<ermt__Risk__c> risks, ApprovalAssign__c approvalAssigns){
         List<Approval.ProcessSubmitRequest> apps = new List<Approval.ProcessSubmitRequest>();
         List<ApprovalAssign_Risk_Junc__c> arjs = new List<ApprovalAssign_Risk_Junc__c>();
             for(ermt__Risk__c risk: risks){
@@ -216,7 +160,7 @@ private class DAM_Processed_Risk_List_CtlrTest {
                 // Create List ApprovalAssign_Risk_Junc
                 arjs.add(new ApprovalAssign_Risk_Junc__c(
                     Risk__c = risk.Id,
-                    ApprovalAssign__c = approvalAssigns[0].Id
+                    ApprovalAssign__c = approvalAssigns.Id
                 ));
             }
 
